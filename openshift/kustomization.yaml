@@ -7,10 +7,11 @@ images:
 - name: quay.io/jkeam/viewvirt-api
   digest: sha256:78561c25ecdc1b844686380bca857ddd76cc1657e169481d63bc02f1c416f184
 - name: quay.io/jkeam/viewvirt-web
-  digest: sha256:08c1fe081db3e65fa1ae3c0ba7a06663ae56dcf94c07a1fe2efad16c2ae4483d
+  digest: sha256:d440f0dd80608e8997e571724aa5c9aaa12281b9cf134934cf2db8cbc80504f2
 
 resources:
-  - namespace.yaml
-  - rbac.yaml
-  - deployment-api.yaml
-  - deployment-web.yaml
+- namespace.yaml
+- rbac.yaml
+- deployment-api.yaml
+- deployment-web.yaml
+- console-link.yaml

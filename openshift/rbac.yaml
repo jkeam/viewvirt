@@ -2,7 +2,7 @@
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: ocp-virt-app-role
+  name: viewvirt-role
 rules:
 - apiGroups: [""]
   resources: ["pods"]
@@ -12,26 +12,26 @@ rules:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: ocp-virt-app
+  name: viewvirt
 
 ---
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: ocp-virt-app-role-binding
+  name: viewvirt-role-binding
 subjects:
 - kind: ServiceAccount
-  name: ocp-virt-app
+  name: viewvirt
 roleRef:
   kind: Role
-  name: ocp-virt-app-role
+  name: viewvirt-role
   apiGroup: rbac.authorization.k8s.io
 
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: ocp-virt-app-cluster-role
+  name: viewvirt-cluster-role
 rules:
 - apiGroups: [""]
   resources: ["nodes"]
@@ -47,11 +47,11 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: ocp-virt-app-cluster-role-binding
+  name: viewvirt-cluster-role-binding
 subjects:
 - kind: ServiceAccount
-  name: ocp-virt-app
+  name: viewvirt
 roleRef:
   kind: ClusterRole
-  name: ocp-virt-app-cluster-role
+  name: viewvirt-cluster-role
   apiGroup: rbac.authorization.k8s.io

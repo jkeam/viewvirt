@@ -1,30 +1,30 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ocp-virt-app-web
+  name: viewvirt-web
   labels:
-    app: ocp-virt-app-web
+    app: viewvirt-web
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ocp-virt-app-web
+      app: viewvirt-web
   template:
     metadata:
       labels:
-        app: ocp-virt-app-web
+        app: viewvirt-web
     spec:
-      serviceAccountName: ocp-virt-app
+      serviceAccountName: viewvirt
       securityContext:
         runAsNonRoot: true
       containers:
-      - name: ocp-virt-app-web
+      - name: viewvirt-web
         image: quay.io/jkeam/viewvirt-web
         ports:
         - containerPort: 3000
         env:
         - name: API_BASE_URL
-          value: "http://ocp-virt-app-api:8080"
+          value: "http://viewvirt-api:8080"
         livenessProbe:
           httpGet:
             path: /api/healthz
@@ -54,8 +54,8 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: ocp-virt-app-web
-  name: ocp-virt-app-web
+    app: viewvirt-web
+  name: viewvirt-web
 spec:
   ports:
   - name: 3000-3000
@@ -63,18 +63,18 @@ spec:
     protocol: TCP
     targetPort: 3000
   selector:
-    app: ocp-virt-app-web
+    app: viewvirt-web
   type: ClusterIP
 
 ---
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  name: ocp-virt-app-web
+  name: viewvirt-web
 spec:
   port:
     targetPort: 3000
   tls:
     termination: edge
   to:
-    name: ocp-virt-app-web
+    name: viewvirt-web

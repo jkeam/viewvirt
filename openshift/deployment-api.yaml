@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ocp-virt-app-api
+  name: viewvirt-api
   labels:
-    app: ocp-virt-app-api
+    app: viewvirt-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ocp-virt-app-api
+      app: viewvirt-api
   template:
     metadata:
       labels:
-        app: ocp-virt-app-api
+        app: viewvirt-api
     spec:
-      serviceAccountName: ocp-virt-app
+      serviceAccountName: viewvirt
       securityContext:
         runAsNonRoot: true
       containers:
-      - name: ocp-virt-app-api
+      - name: viewvirt-api
         image: quay.io/jkeam/viewvirt-api
         ports:
         - containerPort: 8080
@@ -51,8 +51,8 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: ocp-virt-app-api
-  name: ocp-virt-app-api
+    app: viewvirt-api
+  name: viewvirt-api
 spec:
   ports:
   - name: 8080-8080
@@ -60,18 +60,18 @@ spec:
     protocol: TCP
     targetPort: 8080
   selector:
-    app: ocp-virt-app-api
+    app: viewvirt-api
   type: ClusterIP
 
 ---
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  name: ocp-virt-app-api
+  name: viewvirt-api
 spec:
   port:
     targetPort: 8080
   tls:
     termination: edge
   to:
-    name: ocp-virt-app-api
+    name: viewvirt-api
