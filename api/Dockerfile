@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/python-312
+FROM registry.access.redhat.com/ubi9/python-312:9.5-1739797362
 
 # Upgrade pip
 RUN python3.12 -m pip install --upgrade pip
