@@ -1,0 +1,57 @@
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ocp-virt-app-role
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ocp-virt-app
+
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ocp-virt-app-role-binding
+subjects:
+- kind: ServiceAccount
+  name: ocp-virt-app
+roleRef:
+  kind: Role
+  name: ocp-virt-app-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ocp-virt-app-cluster-role
+rules:
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get", "list"]
+- apiGroups: ["kubevirt.io"]
+  resources: ["*"]
+  verbs: ["get", "list"]
+- apiGroups: ["cdi.kubevirt.io"]
+  resources: ["*"]
+  verbs: ["get", "list"]
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ocp-virt-app-cluster-role-binding
+subjects:
+- kind: ServiceAccount
+  name: ocp-virt-app
+roleRef:
+  kind: ClusterRole
+  name: ocp-virt-app-cluster-role
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ocp-virt-app-web
+  labels:
+    app: ocp-virt-app-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ocp-virt-app-web
+  template:
+    metadata:
+      labels:
+        app: ocp-virt-app-web
+    spec:
+      serviceAccountName: ocp-virt-app
+      securityContext:
+        runAsNonRoot: true
+      containers:
+      - name: ocp-virt-app-web
+        image: quay.io/jkeam/viewvirt-web
+        ports:
+        - containerPort: 3000
+        env:
+        - name: API_BASE_URL
+          value: "http://ocp-virt-app-api:8080"
+        livenessProbe:
+          httpGet:
+            path: /api/healthz
+            port: 3000
+            httpHeaders:
+            - name: Accept
+              value: application/json
+          initialDelaySeconds: 2
+          periodSeconds: 2
+        readinessProbe:
+          httpGet:
+            path: /api/healthz
+            port: 3000
+            httpHeaders:
+            - name: Accept
+              value: application/json
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ocp-virt-app-web
+  name: ocp-virt-app-web
+spec:
+  ports:
+  - name: 3000-3000
+    port: 3000
+    protocol: TCP
+    targetPort: 3000
+  selector:
+    app: ocp-virt-app-web
+  type: ClusterIP
+
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: ocp-virt-app-web
+spec:
+  port:
+    targetPort: 3000
+  tls:
+    termination: edge
+  to:
+    name: ocp-virt-app-web
