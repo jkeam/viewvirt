@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAtom } from 'jotai';
 import {
   Brand,
   Masthead,
@@ -7,12 +8,21 @@ import {
   MastheadToggle,
   MastheadBrand,
   MastheadContent,
-  PageToggleButton
+  PageToggleButton,
+  Button,
+  Toolbar,
+  ToolbarContent,
+  ToolbarItem
 } from '@patternfly/react-core';
 import BarsIcon from '@patternfly/react-icons/dist/esm/icons/bars-icon';
+import MoonIcon from '@patternfly/react-icons/dist/esm/icons/moon-icon';
+import SunIcon from '@patternfly/react-icons/dist/esm/icons/sun-icon';
 import logo from '../../assets/logo.svg';
+import { darkModeAtom } from '../../utils/store.js';
 
 export default function Header() {
+  const [darkMode, setDarkMode] = useAtom(darkModeAtom);
+
   return (
     <Masthead>
       <MastheadMain>
@@ -27,6 +37,20 @@ export default function Header() {
           </MastheadLogo>
         </MastheadBrand>
       </MastheadMain>
+      <MastheadContent>
+        <Toolbar isFullHeight isStatic>
+          <ToolbarContent>
+            <ToolbarItem>
+              <Button
+                variant="plain"
+                aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                onClick={() => setDarkMode(!darkMode)}
+                icon={darkMode ? <SunIcon /> : <MoonIcon />}
+              />
+            </ToolbarItem>
+          </ToolbarContent>
+        </Toolbar>
+      </MastheadContent>
     </Masthead>
   );
 }

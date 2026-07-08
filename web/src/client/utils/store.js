@@ -13,6 +13,23 @@ import {
   transformVmnamespaces,
 } from './transformers.js';
 
+// Dark mode atom with localStorage persistence
+const darkModeAtomBase = atom(
+  typeof window !== 'undefined'
+    ? localStorage.getItem('darkMode') === 'true'
+    : false
+);
+
+export const darkModeAtom = atom(
+  (get) => get(darkModeAtomBase),
+  (get, set, newValue) => {
+    set(darkModeAtomBase, newValue);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('darkMode', String(newValue));
+    }
+  }
+);
+
 export const vmsAtom = atom([]);
 export const getVms = async () => {
   const fetched = await fetchVms();

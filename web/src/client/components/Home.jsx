@@ -21,12 +21,13 @@ import {
   NetworkIcon,
   CpuIcon,
 } from '@patternfly/react-icons';
-import { getVms, vmsAtom, getHosts, hostsAtom, getStorages, storagesAtom } from '../utils/store.js';
+import { getVms, vmsAtom, getHosts, hostsAtom, getStorages, storagesAtom, darkModeAtom } from '../utils/store.js';
 
 export default function Home() {
   const [vms, setVms] = useAtom(vmsAtom);
   const [hosts, setHosts] = useAtom(hostsAtom);
   const [storages, setStorages] = useAtom(storagesAtom);
+  const [darkMode] = useAtom(darkModeAtom);
   const [summary, setSummary] = useState({
     totalVMs: 0,
     runningVMs: 0,
@@ -117,6 +118,17 @@ export default function Home() {
   const SummaryCard = ({ icon: Icon, title, value, subtitle, color = 'blue', linkTo }) => {
     const [isHovered, setIsHovered] = useState(false);
 
+    const getBoxShadow = () => {
+      if (darkMode) {
+        return isHovered
+          ? '0 8px 16px rgba(255, 255, 255, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.1)'
+          : '0 2px 8px rgba(255, 255, 255, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.05)';
+      }
+      return isHovered
+        ? '0 8px 16px rgba(0, 0, 0, 0.15)'
+        : '0 2px 4px rgba(0, 0, 0, 0.1)';
+    };
+
     return (
       <Link to={linkTo} style={{ textDecoration: 'none', color: 'inherit' }}>
         <Card
@@ -128,11 +140,8 @@ export default function Home() {
             cursor: 'pointer',
             transition: 'all 0.2s ease-in-out',
             transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
-            boxShadow: isHovered
-              ? '0 8px 16px rgba(0, 0, 0, 0.15)'
-              : '0 2px 4px rgba(0, 0, 0, 0.1)',
-            border: isHovered ? `2px solid ${color}` : '1px solid #d2d2d2',
-            backgroundColor: isHovered ? '#f5f5f5' : '#fff',
+            boxShadow: getBoxShadow(),
+            border: isHovered ? `2px solid ${color}` : undefined,
           }}
         >
           <CardBody style={{ padding: '24px' }}>
@@ -154,7 +163,7 @@ export default function Home() {
               </FlexItem>
               {subtitle && (
                 <FlexItem>
-                  <small style={{ color: '#6a6e73', fontSize: '0.85rem' }}>
+                  <small style={{ opacity: 0.7, fontSize: '0.85rem' }}>
                     {subtitle}
                   </small>
                 </FlexItem>
