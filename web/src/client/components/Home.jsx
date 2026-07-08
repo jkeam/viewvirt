@@ -35,6 +35,7 @@ export default function Home() {
     totalCPU: 0,
     usedCPU: 0,
     totalMemory: '0',
+    usedMemory: '0',
     totalStorage: 0,
     totalStorageSize: '0',
   });
@@ -69,6 +70,19 @@ export default function Home() {
       // Calculate total CPUs used by all VMs
       const usedCPU = fetchedVms.reduce((sum, vm) => sum + parseInt(vm.cpu || 0), 0);
 
+      // Calculate total memory used by all VMs
+      const usedMemory = fetchedVms.reduce((sum, vm) => {
+        const memStr = vm.memory || '0Gi';
+        // Memory is in Gi format (e.g., "4Gi")
+        if (memStr.includes('Gi')) {
+          const memVal = parseFloat(memStr.replace('Gi', ''));
+          return sum + memVal;
+        }
+        return sum;
+      }, 0);
+
+      const freeMemory = totalMemory - usedMemory;
+
       // Calculate total storage size
       const totalStorageSize = fetchedStorages.reduce((sum, storage) => {
         const storageStr = storage.storage || '0Gi';
@@ -87,7 +101,9 @@ export default function Home() {
         totalHosts: fetchedHosts.length,
         totalCPU,
         usedCPU,
-        totalMemory: `${totalMemory.toFixed(2)} GB`,
+        totalMemory: `${totalMemory.toFixed(0)} GB`,
+        usedMemory: `${usedMemory.toFixed(0)} GB`,
+        freeMemory: `${freeMemory.toFixed(0)} GB`,
         totalStorage: fetchedStorages.length,
         totalStorageSize: `${totalStorageSize.toFixed(0)} GB`,
       });
@@ -193,8 +209,8 @@ export default function Home() {
           <SummaryCard
             icon={ServerIcon}
             title="Memory"
-            value={summary.totalMemory}
-            subtitle="total capacity"
+            value={`${summary.freeMemory} free`}
+            subtitle={`${summary.totalMemory} total, ${summary.usedMemory} used by VMs`}
             color="#f0ab00"
             linkTo="/hosts"
           />
