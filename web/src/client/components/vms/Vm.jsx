@@ -33,7 +33,7 @@ export default function Vm() {
   const [vmnamespaces, setVmnamespaces] = useAtom(vmnamespacesAtom);
   const [filteredVms, setFilteredVms] = useState([]);
   const [isNamespaceSelectOpen, setNamespaceSelectIsOpen] = useState(false);
-  const [selectedNamespace, setSelectedNamespace] = useState(urlNamespace || 'Select namespace');
+  const [selectedNamespace, setSelectedNamespace] = useState(urlNamespace || 'All Namespaces');
   const [alert, setAlert] = useState(null);
   const [operatingVm, setOperatingVm] = useState(null);
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function Vm() {
       setVms(fetched);
       if (selectedNamespace === 'All Namespaces') {
         setFilteredVms(fetched);
-      } else if (selectedNamespace !== 'Select namespace') {
+      } else {
         setFilteredVms(fetched.filter(v => v.namespace === selectedNamespace));
       }
       const fetchVmnamespaces = await getVmnamespaces();
@@ -111,7 +111,9 @@ export default function Vm() {
         // Immediate refresh after action
         const fetched = await getVms();
         setVms(fetched);
-        if (selectedNamespace !== 'Select namespace') {
+        if (selectedNamespace === 'All Namespaces') {
+          setFilteredVms(fetched);
+        } else {
           setFilteredVms(fetched.filter(v => v.namespace === selectedNamespace));
         }
         // Keep operatingVm set until status reflects the change
