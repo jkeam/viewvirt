@@ -97,16 +97,17 @@ def fetch_vms() -> list[dict[str, str]]:
         running = vm['spec'].get('running', None)
 
         if instance:
-            # Instance exists - check if it should be stopping
+            # Instance exists - check if it's being stopped
+            instance_phase = instance['status'].get('phase', 'Unknown')
+
+            # If runStrategy is Halted but instance still exists, VM is stopping
             if run_strategy == 'Halted':
-                # VM is set to Halted but instance still exists = Terminating
-                status = 'Terminating'
+                status = 'Stopping'
             elif run_strategy is None and running == False:
-                # Using deprecated running field, set to stop
-                status = 'Terminating'
+                status = 'Stopping'
             else:
                 # Use the actual instance phase
-                status = instance['status'].get('phase', 'Unknown')
+                status = instance_phase
         else:
             # No instance - VM is stopped or should be starting
             if run_strategy:

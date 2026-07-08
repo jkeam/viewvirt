@@ -90,11 +90,13 @@ export default function VmDetail() {
         return 'The virtual machine is stopped and not consuming resources.';
       case 'Pending':
       case 'Scheduling':
+      case 'Scheduled':
       case 'Starting':
       case 'Provisioning':
         return 'The virtual machine is starting up or being provisioned.';
-      case 'Terminating':
-        return 'The virtual machine is in the process of shutting down.';
+      case 'Stopping':
+      case 'Succeeded':
+        return 'The virtual machine is shutting down.';
       case 'Failed':
         return 'The virtual machine has encountered an error.';
       default:
@@ -104,11 +106,12 @@ export default function VmDetail() {
 
   // Intelligent button states based on VM status
   // Disable start if: operating, running, pending, scheduling, or any starting state
-  const transitionStates = ['Running', 'Pending', 'Scheduling', 'Starting', 'Provisioning'];
-  const canStart = !operatingVm && !transitionStates.includes(vm.status);
-  // Allow stop if Running OR in any pending/starting state (to cancel startup)
-  const canStop = !operatingVm && transitionStates.includes(vm.status) && vm.status !== 'Terminating';
-  const canRestart = !operatingVm && ['Running'].includes(vm.status);
+  const runningStates = ['Running', 'Pending', 'Scheduling', 'Scheduled', 'Starting', 'Provisioning'];
+  const stoppingStates = ['Stopping', 'Succeeded'];
+  const canStart = !operatingVm && !runningStates.includes(vm.status) && !stoppingStates.includes(vm.status);
+  // Allow stop if Running OR in any pending/starting state (to cancel startup), but not if already stopping
+  const canStop = !operatingVm && runningStates.includes(vm.status) && !stoppingStates.includes(vm.status);
+  const canRestart = !operatingVm && vm.status === 'Running';
 
   return (
     <PageSection hasBodyWrapper={false}>

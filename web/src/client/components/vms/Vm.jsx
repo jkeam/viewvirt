@@ -113,11 +113,12 @@ export default function Vm() {
 
     // Intelligent button states based on VM status
     // Disable start if: operating, running, pending, scheduling, or any starting state
-    const transitionStates = ['Running', 'Pending', 'Scheduling', 'Starting', 'Provisioning'];
-    const canStart = !isOperating && !transitionStates.includes(item.status);
-    // Allow stop if Running OR in any pending/starting state (to cancel startup)
-    const canStop = !isOperating && (transitionStates.includes(item.status)) && item.status !== 'Terminating';
-    const canRestart = !isOperating && ['Running'].includes(item.status);
+    const runningStates = ['Running', 'Pending', 'Scheduling', 'Scheduled', 'Starting', 'Provisioning'];
+    const stoppingStates = ['Stopping', 'Succeeded'];
+    const canStart = !isOperating && !runningStates.includes(item.status) && !stoppingStates.includes(item.status);
+    // Allow stop if Running OR in any pending/starting state (to cancel startup), but not if already stopping
+    const canStop = !isOperating && runningStates.includes(item.status) && !stoppingStates.includes(item.status);
+    const canRestart = !isOperating && item.status === 'Running';
 
     // Debug logging
     if (isOperating) {
