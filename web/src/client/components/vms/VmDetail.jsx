@@ -313,28 +313,78 @@ export default function VmDetail() {
             <Tab eventKey={3} title={<TabTitleText>Network</TabTitleText>}>
               <Card>
                 <CardBody>
-                  <Title headingLevel="h3" size="lg">Network Interfaces</Title>
-                  {vm.rawInterfaces && vm.rawInterfaces.map((iface, idx) => (
-                    <div key={idx} style={{ marginBottom: '16px' }}>
-                      <DescriptionList>
-                        <DescriptionListGroup>
-                          <DescriptionListTerm>Interface Name</DescriptionListTerm>
-                          <DescriptionListDescription>{iface.name}</DescriptionListDescription>
-                        </DescriptionListGroup>
-                        <DescriptionListGroup>
-                          <DescriptionListTerm>Type</DescriptionListTerm>
-                          <DescriptionListDescription>
-                            {iface.bridge ? 'Bridge' : iface.masquerade ? 'Masquerade' : 'N/A'}
-                          </DescriptionListDescription>
-                        </DescriptionListGroup>
-                        <DescriptionListGroup>
-                          <DescriptionListTerm>Model</DescriptionListTerm>
-                          <DescriptionListDescription>{iface.model || 'N/A'}</DescriptionListDescription>
-                        </DescriptionListGroup>
-                      </DescriptionList>
-                      {idx < vm.rawInterfaces.length - 1 && <Divider style={{ marginTop: '16px' }} />}
-                    </div>
-                  ))}
+                  <Title headingLevel="h3" size="lg">Network Configuration</Title>
+                  {vm.rawInterfaces && vm.rawInterfaces.map((iface, idx) => {
+                    // Find matching network status for this interface
+                    const netStatus = vm.networkStatus?.find(ns => ns.name === iface.name);
+
+                    return (
+                      <div key={idx} style={{ marginBottom: '16px' }}>
+                        <DescriptionList>
+                          <DescriptionListGroup>
+                            <DescriptionListTerm>Interface Name</DescriptionListTerm>
+                            <DescriptionListDescription>{iface.name}</DescriptionListDescription>
+                          </DescriptionListGroup>
+                          <DescriptionListGroup>
+                            <DescriptionListTerm>Type</DescriptionListTerm>
+                            <DescriptionListDescription>
+                              {iface.bridge ? 'Bridge' : iface.masquerade ? 'Masquerade' : iface.sriov ? 'SR-IOV' : 'N/A'}
+                            </DescriptionListDescription>
+                          </DescriptionListGroup>
+                          <DescriptionListGroup>
+                            <DescriptionListTerm>Network</DescriptionListTerm>
+                            <DescriptionListDescription>
+                              {iface.bridge?.name || iface.masquerade?.name || 'Pod Network'}
+                            </DescriptionListDescription>
+                          </DescriptionListGroup>
+                          <DescriptionListGroup>
+                            <DescriptionListTerm>Model</DescriptionListTerm>
+                            <DescriptionListDescription>{iface.model || 'virtio'}</DescriptionListDescription>
+                          </DescriptionListGroup>
+                          {netStatus && (
+                            <>
+                              {netStatus.ip_address && netStatus.ip_address !== 'N/A' && (
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>IP Address</DescriptionListTerm>
+                                  <DescriptionListDescription>{netStatus.ip_address}</DescriptionListDescription>
+                                </DescriptionListGroup>
+                              )}
+                              {netStatus.ip_addresses && netStatus.ip_addresses.length > 0 && (
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>All IP Addresses</DescriptionListTerm>
+                                  <DescriptionListDescription>{netStatus.ip_addresses.join(', ')}</DescriptionListDescription>
+                                </DescriptionListGroup>
+                              )}
+                              {netStatus.mac && netStatus.mac !== 'N/A' && (
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>MAC Address</DescriptionListTerm>
+                                  <DescriptionListDescription>{netStatus.mac}</DescriptionListDescription>
+                                </DescriptionListGroup>
+                              )}
+                              {netStatus.interface_name && netStatus.interface_name !== 'N/A' && (
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>Pod Interface</DescriptionListTerm>
+                                  <DescriptionListDescription>{netStatus.interface_name}</DescriptionListDescription>
+                                </DescriptionListGroup>
+                              )}
+                            </>
+                          )}
+                          {iface.ports && iface.ports.length > 0 && (
+                            <DescriptionListGroup>
+                              <DescriptionListTerm>Ports</DescriptionListTerm>
+                              <DescriptionListDescription>
+                                {iface.ports.map(port => `${port.name || port.port} (${port.protocol})`).join(', ')}
+                              </DescriptionListDescription>
+                            </DescriptionListGroup>
+                          )}
+                        </DescriptionList>
+                        {idx < vm.rawInterfaces.length - 1 && <Divider style={{ marginTop: '16px' }} />}
+                      </div>
+                    );
+                  })}
+                  {(!vm.rawInterfaces || vm.rawInterfaces.length === 0) && (
+                    <p style={{ color: '#6a6e73' }}>No network interfaces configured</p>
+                  )}
                 </CardBody>
               </Card>
             </Tab>

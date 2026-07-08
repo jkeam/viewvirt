@@ -20,7 +20,8 @@ export const transformVms = (fetched) => {
       interfaces: (item.interfaces || []).map(i => `${i.name} (${i.model})`).join(', '),
       // Keep raw data for detail view
       rawDataVolumes: item.data_volumes || [],
-      rawInterfaces: item.interfaces || []
+      rawInterfaces: item.interfaces || [],
+      networkStatus: item.network_status || []
     };
   };
   return fetched.map(transform);
@@ -105,6 +106,9 @@ export const transformNetworks = (fetched) => {
         name: inter.name,
         model: inter.model,
         macAddress: inter.macAddress,
+        bridge: inter.bridge,
+        masquerade: inter.masquerade,
+        sriov: inter.sriov,
         ports
       });
     }

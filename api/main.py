@@ -153,6 +153,18 @@ def fetch_vms() -> list[dict[str, str]]:
         if os == 'Unknown':
             os = vm['spec'].get('template', {}).get('metadata', {}).get('annotations', {}).get('vm.kubevirt.io/os', 'Unknown')
 
+        # Get pod network information from instance status if available
+        network_status = []
+        if instance:
+            interfaces_status = instance.get('status', {}).get('interfaces', [])
+            network_status = list(map(lambda iface: {
+                "name": iface.get('name', 'N/A'),
+                "interface_name": iface.get('interfaceName', 'N/A'),
+                "ip_address": iface.get('ipAddress', 'N/A'),
+                "ip_addresses": iface.get('ipAddresses', []),
+                "mac": iface.get('mac', 'N/A')
+            }, interfaces_status))
+
         result.append({
             "name": vm_name,
             "namespace": vm_namespace,
@@ -163,6 +175,7 @@ def fetch_vms() -> list[dict[str, str]]:
             "disks": spec.get('domain', {}).get('devices', {}).get('disks', []),
             "data_volumes": volumes,
             "interfaces": spec.get('domain', {}).get('devices', {}).get('interfaces', []),
+            "network_status": network_status,
             "machine_type": spec.get('domain', {}).get('machine', {}).get('type', 'Unknown'),
             "running": status not in ['Stopped', 'Halted'],
             "status": status,
