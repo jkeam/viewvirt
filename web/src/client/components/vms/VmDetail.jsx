@@ -62,11 +62,14 @@ export default function VmDetail() {
       } else if (action === 'restart') {
         await restartVm(namespace, name);
       }
-      // Immediate refresh after action, then polling will continue updates
+      // Immediate refresh after action
       const vms = await getVms();
       const foundVm = vms.find(v => v.namespace === namespace && v.name === name);
       setVm(foundVm);
-    } finally {
+      // Keep operatingVm set for 2 seconds to prevent double-clicks
+      setTimeout(() => setOperatingVm(false), 2000);
+    } catch (error) {
+      console.error('VM action error:', error);
       setOperatingVm(false);
     }
   };
@@ -86,6 +89,9 @@ export default function VmDetail() {
       case 'Stopped':
         return 'The virtual machine is stopped and not consuming resources.';
       case 'Pending':
+      case 'Scheduling':
+      case 'Starting':
+      case 'Provisioning':
         return 'The virtual machine is starting up or being provisioned.';
       case 'Terminating':
         return 'The virtual machine is in the process of shutting down.';
@@ -95,6 +101,14 @@ export default function VmDetail() {
         return 'The virtual machine is in an unknown state.';
     }
   };
+
+  // Intelligent button states based on VM status
+  // Disable start if: operating, running, pending, scheduling, or any starting state
+  const transitionStates = ['Running', 'Pending', 'Scheduling', 'Starting', 'Provisioning'];
+  const canStart = !operatingVm && !transitionStates.includes(vm.status);
+  // Allow stop if Running OR in any pending/starting state (to cancel startup)
+  const canStop = !operatingVm && transitionStates.includes(vm.status) && vm.status !== 'Terminating';
+  const canRestart = !operatingVm && ['Running'].includes(vm.status);
 
   return (
     <PageSection hasBodyWrapper={false}>
@@ -127,7 +141,7 @@ export default function VmDetail() {
                     variant="primary"
                     icon={<PlayIcon />}
                     onClick={() => handleVmAction('start')}
-                    isDisabled={operatingVm || vm.status === 'Running'}
+                    isDisabled={!canStart}
                   >
                     Start
                   </Button>
@@ -137,7 +151,7 @@ export default function VmDetail() {
                     variant="danger"
                     icon={<StopIcon />}
                     onClick={() => handleVmAction('stop')}
-                    isDisabled={operatingVm || vm.status !== 'Running'}
+                    isDisabled={!canStop}
                   >
                     Stop
                   </Button>
@@ -147,7 +161,7 @@ export default function VmDetail() {
                     variant="secondary"
                     icon={<RedoIcon />}
                     onClick={() => handleVmAction('restart')}
-                    isDisabled={operatingVm || vm.status !== 'Running'}
+                    isDisabled={!canRestart}
                   >
                     Restart
                   </Button>

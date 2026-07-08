@@ -92,21 +92,39 @@ def fetch_vms() -> list[dict[str, str]]:
         vm_key = f"{vm_namespace}/{vm_name}"
         instance = instance_by_name.get(vm_key)
 
-        # Determine status
+        # Determine status - prioritize runStrategy over deprecated running field
+        run_strategy = vm['spec'].get('runStrategy', None)
+        running = vm['spec'].get('running', None)
+
         if instance:
-            status = instance['status'].get('phase', 'Unknown')
-        else:
-            # No instance means VM is stopped
-            run_strategy = vm['spec'].get('runStrategy', None)
+            # Instance exists - check if it should be stopping
             if run_strategy == 'Halted':
-                status = 'Stopped'
+                # VM is set to Halted but instance still exists = Terminating
+                status = 'Terminating'
+            elif run_strategy is None and running == False:
+                # Using deprecated running field, set to stop
+                status = 'Terminating'
             else:
-                # Check if it's supposed to be running but isn't yet
-                running = vm['spec'].get('running', False)
-                if running or run_strategy in ['Always', 'RerunOnFailure']:
+                # Use the actual instance phase
+                status = instance['status'].get('phase', 'Unknown')
+        else:
+            # No instance - VM is stopped or should be starting
+            if run_strategy:
+                # Using runStrategy (newer API)
+                if run_strategy == 'Halted':
+                    status = 'Stopped'
+                elif run_strategy in ['Always', 'RerunOnFailure']:
                     status = 'Pending'
                 else:
                     status = 'Stopped'
+            elif running is not None:
+                # Using deprecated running field
+                if running:
+                    status = 'Pending'
+                else:
+                    status = 'Stopped'
+            else:
+                status = 'Stopped'
 
         # Get VM spec from VM object or instance
         spec = instance['spec'] if instance else vm['spec']['template']['spec']

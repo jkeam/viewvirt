@@ -87,18 +87,21 @@ export default function Vm() {
 
       if (result.status === 'error') {
         setAlert({ type: 'danger', message: `Failed to ${action} VM: ${result.message}` });
+        setOperatingVm(null);
       } else {
         setAlert({ type: 'success', message: `VM ${action} command sent successfully` });
-        // Immediate refresh after action, then polling will continue updates
+        // Immediate refresh after action
         const fetched = await getVms();
         setVms(fetched);
         if (selectedNamespace !== 'Select namespace') {
           setFilteredVms(fetched.filter(v => v.namespace === selectedNamespace));
         }
+        // Keep operatingVm set until status reflects the change
+        // This prevents double-clicks during the brief moment before the API updates
+        setTimeout(() => setOperatingVm(null), 2000);
       }
     } catch (error) {
       setAlert({ type: 'danger', message: `Error: ${error.message}` });
-    } finally {
       setOperatingVm(null);
     }
   };
@@ -107,6 +110,20 @@ export default function Vm() {
   const rows = (item) => {
     const isOperating = operatingVm === item.name;
     const statusColor = item.status === 'Running' ? 'green' : item.status === 'Stopped' ? 'grey' : 'orange';
+
+    // Intelligent button states based on VM status
+    // Disable start if: operating, running, pending, scheduling, or any starting state
+    const transitionStates = ['Running', 'Pending', 'Scheduling', 'Starting', 'Provisioning'];
+    const canStart = !isOperating && !transitionStates.includes(item.status);
+    // Allow stop if Running OR in any pending/starting state (to cancel startup)
+    const canStop = !isOperating && (transitionStates.includes(item.status)) && item.status !== 'Terminating';
+    const canRestart = !isOperating && ['Running'].includes(item.status);
+
+    // Debug logging
+    if (isOperating) {
+      console.log(`VM ${item.name}: status=${item.status}, canStart=${canStart}, isOperating=${isOperating}`);
+    }
+
     return [
       <Link to={`/vms/${item.namespace}/${item.name}`} key={`link-${item.name}`} style={{ color: '#06c', textDecoration: 'none' }}>
         {item.name}
@@ -125,7 +142,7 @@ export default function Vm() {
             variant={ButtonVariant.primary}
             icon={<PlayIcon />}
             onClick={() => handleVmAction('start', item.namespace, item.name)}
-            isDisabled={isOperating || item.status === 'Running'}
+            isDisabled={!canStart}
             size="sm"
           >
             Start
@@ -136,7 +153,7 @@ export default function Vm() {
             variant={ButtonVariant.danger}
             icon={<StopIcon />}
             onClick={() => handleVmAction('stop', item.namespace, item.name)}
-            isDisabled={isOperating || item.status !== 'Running'}
+            isDisabled={!canStop}
             size="sm"
           >
             Stop
@@ -147,7 +164,7 @@ export default function Vm() {
             variant={ButtonVariant.secondary}
             icon={<RedoIcon />}
             onClick={() => handleVmAction('restart', item.namespace, item.name)}
-            isDisabled={isOperating || item.status !== 'Running'}
+            isDisabled={!canRestart}
             size="sm"
           >
             Restart
