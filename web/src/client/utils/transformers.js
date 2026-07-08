@@ -26,7 +26,7 @@ export const transformVms = (fetched) => {
   return fetched.map(transform);
 };
 
-export const transformNodes = (fetched) => {
+export const transformHosts = (fetched) => {
   if (!fetched) {
     return [];
   }

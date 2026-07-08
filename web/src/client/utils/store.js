@@ -1,13 +1,13 @@
 import { atom } from 'jotai';
 import {
   fetchVms,
-  fetchNodes,
+  fetchHosts,
   fetchStorages,
   fetchVmnamespaces,
 } from './api.js';
 import {
   transformVms,
-  transformNodes,
+  transformHosts,
   transformStorages,
   transformNetworks,
   transformVmnamespaces,
@@ -19,10 +19,10 @@ export const getVms = async () => {
   return transformVms(fetched);
 };
 
-export const nodesAtom = atom([]);
-export const getNodes = async () => {
-  const fetched = await fetchNodes();
-  return transformNodes(fetched);
+export const hostsAtom = atom([]);
+export const getHosts = async () => {
+  const fetched = await fetchHosts();
+  return transformHosts(fetched);
 };
 
 export const storagesAtom = atom([]);

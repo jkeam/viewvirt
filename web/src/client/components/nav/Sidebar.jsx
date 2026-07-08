@@ -15,7 +15,7 @@ import {
 export default function Sidebar() {
   const navigate = useNavigate();
   const route = useLocation();
-  const mapping = ['/', '/nodes', '/vms', '/storages', '/networks'];
+  const mapping = ['/', '/hosts', '/vms', '/storages', '/networks'];
   const onSelect = ({ itemId }) => navigate(mapping[itemId]);
   const pageNav = (
     <Nav onSelect={onSelect} aria-label="Nav">
@@ -23,8 +23,8 @@ export default function Sidebar() {
         <NavItem itemId={0} isActive={route.pathname === mapping[0]} to="/">
           Home
         </NavItem>
-        <NavItem itemId={1} isActive={route.pathname === mapping[1]} to="/nodes">
-          Nodes
+        <NavItem itemId={1} isActive={route.pathname === mapping[1]} to="/hosts">
+          Hosts
         </NavItem>
         <NavItem itemId={2} isActive={route.pathname === mapping[2]} to="/vms">
           Virtual Machines

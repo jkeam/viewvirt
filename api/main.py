@@ -170,16 +170,16 @@ def fetch_vms() -> list[dict[str, str]]:
 
     return result
 
-def fetch_nodes() -> list[dict[str, str]]:
-    logger.info("fetch_nodes")
+def fetch_hosts() -> list[dict[str, str]]:
+    logger.info("fetch_hosts")
     api = client.CoreV1Api()
-    nodes = api.list_node()
-    return list(map(lambda node: {
-        "name": node.metadata.name,
-        "cpu": node.status.capacity['cpu'],
-        "memory": node.status.capacity['memory'],
-        "host_ip": list(filter(lambda address: (address.type == 'InternalIP'), node.status.addresses))[0].address
-    }, nodes.items))
+    hosts = api.list_node()
+    return list(map(lambda host: {
+        "name": host.metadata.name,
+        "cpu": host.status.capacity['cpu'],
+        "memory": host.status.capacity['memory'],
+        "host_ip": list(filter(lambda address: (address.type == 'InternalIP'), host.status.addresses))[0].address
+    }, hosts.items))
 
 def fetch_storages() -> list[dict[str, str]]:
     logger.info("fetch_storages")
@@ -213,9 +213,9 @@ def get_vms():
 def get_vmnamespaces():
     return {"vmnamespaces": fetch_vmnamespaces()}
 
-@app.get("/nodes")
-def get_nodes():
-    return {"nodes": fetch_nodes()}
+@app.get("/hosts")
+def get_hosts():
+    return {"hosts": fetch_hosts()}
 
 @app.get("/storages")
 def get_storages():

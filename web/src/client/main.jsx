@@ -4,7 +4,7 @@ import App from './App.jsx';
 import Home from './components/Home.jsx';
 import Vm from './components/vms/Vm.jsx';
 import VmDetail from './components/vms/VmDetail.jsx';
-import Node from './components/nodes/Node.jsx';
+import Host from './components/nodes/Host.jsx';
 import Storage from './components/storages/Storage.jsx';
 import Network from './components/networks/Network.jsx';
 import {
@@ -18,8 +18,8 @@ const router = createBrowserRouter([
     path: "/",
     element: <App title="Home" subtitle="Dashboard"><Home /></App>,
   }, {
-    path: "/nodes",
-    element: <App title="Nodes" subtitle="Node Detail"><Node /></App>,
+    path: "/hosts",
+    element: <App title="Hosts" subtitle="Host Detail"><Host /></App>,
   }, {
     path: "/vms",
     element: <App title="Virtual Machines" subtitle="VMs"><Vm /></App>,

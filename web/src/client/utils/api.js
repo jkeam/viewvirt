@@ -4,10 +4,10 @@ export const fetchVms = async() => {
   return resp['vms'];
 }
 
-export const fetchNodes = async() => {
-  const response = await fetch('/api/nodes');
+export const fetchHosts = async() => {
+  const response = await fetch('/api/hosts');
   const resp = await response.json();
-  return resp['nodes'];
+  return resp['hosts'];
 }
 
 export const fetchStorages = async() => {

@@ -19,11 +19,11 @@ import {
   DatabaseIcon,
   NetworkIcon,
 } from '@patternfly/react-icons';
-import { getVms, vmsAtom, getNodes, nodesAtom, getStorages, storagesAtom } from '../utils/store.js';
+import { getVms, vmsAtom, getHosts, hostsAtom, getStorages, storagesAtom } from '../utils/store.js';
 
 export default function Home() {
   const [vms, setVms] = useAtom(vmsAtom);
-  const [nodes, setNodes] = useAtom(nodesAtom);
+  const [hosts, setHosts] = useAtom(hostsAtom);
   const [storages, setStorages] = useAtom(storagesAtom);
   const [summary, setSummary] = useState({
     totalVMs: 0,
@@ -39,16 +39,16 @@ export default function Home() {
       const fetchedVms = await getVms();
       setVms(fetchedVms);
 
-      const fetchedNodes = await getNodes();
-      setNodes(fetchedNodes);
+      const fetchedHosts = await getHosts();
+      setHosts(fetchedHosts);
 
       const fetchedStorages = await getStorages();
       setStorages(fetchedStorages);
 
       // Calculate summary
-      const totalCPU = fetchedNodes.reduce((sum, node) => sum + parseInt(node.cpu || 0), 0);
-      const totalMemory = fetchedNodes.reduce((sum, node) => {
-        const memStr = node.memory || '0Ki';
+      const totalCPU = fetchedHosts.reduce((sum, host) => sum + parseInt(host.cpu || 0), 0);
+      const totalMemory = fetchedHosts.reduce((sum, host) => {
+        const memStr = host.memory || '0Ki';
         const memVal = parseInt(memStr.replace(/[^0-9]/g, ''));
         return sum + memVal;
       }, 0);
@@ -56,7 +56,7 @@ export default function Home() {
       setSummary({
         totalVMs: fetchedVms.length,
         runningVMs: fetchedVms.length,
-        totalHosts: fetchedNodes.length,
+        totalHosts: fetchedHosts.length,
         totalCPU,
         totalMemory: `${Math.round(totalMemory / (1024 * 1024))} GB`,
         totalStorage: fetchedStorages.length,

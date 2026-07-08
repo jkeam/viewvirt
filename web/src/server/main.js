@@ -44,8 +44,8 @@ app.get("/api/vms", async (req, res) => {
   res.json(json);
 });
 
-app.get("/api/nodes", async (req, res) => {
-  const json = await baseGet("/nodes");
+app.get("/api/hosts", async (req, res) => {
+  const json = await baseGet("/hosts");
   res.json(json);
 });
 

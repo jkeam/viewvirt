@@ -2,14 +2,14 @@ import { useAtom } from 'jotai';
 import { useEffect } from 'react';
 import { PageSection } from '@patternfly/react-core';
 import BasicTable from '../common/BasicTable';
-import { getNodes, nodesAtom } from '../../utils/store.js'
+import { getHosts, hostsAtom } from '../../utils/store.js'
 
-export default function Node() {
-  const [nodes, setNodes] = useAtom(nodesAtom);
+export default function Host() {
+  const [hosts, setHosts] = useAtom(hostsAtom);
   useEffect(() => {
     (async () => {
-      const fetched = await getNodes();
-      setNodes(fetched);
+      const fetched = await getHosts();
+      setHosts(fetched);
     })();
 
     return () => {
@@ -29,7 +29,7 @@ export default function Node() {
 
   return (
     <PageSection hasBodyWrapper={false}>
-      <BasicTable caption="" data={nodes} rows={rows} cols={cols} />
+      <BasicTable caption="" data={hosts} rows={rows} cols={cols} />
     </PageSection>
   );
 }
