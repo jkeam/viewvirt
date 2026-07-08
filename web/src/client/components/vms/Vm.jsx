@@ -35,18 +35,26 @@ export default function Vm() {
   const [alert, setAlert] = useState(null);
   const [operatingVm, setOperatingVm] = useState(null);
   useEffect(() => {
-    (async () => {
+    const fetchData = async () => {
       const fetched = await getVms();
       setVms(fetched);
-      setFilteredVms([]);
+      if (selectedNamespace !== 'Select namespace') {
+        setFilteredVms(fetched.filter(v => v.namespace === selectedNamespace));
+      }
       const fetchVmnamespaces = await getVmnamespaces();
       setVmnamespaces(fetchVmnamespaces);
-    })();
+    };
+
+    // Initial fetch
+    fetchData();
+
+    // Poll every 10 seconds to update VM status
+    const interval = setInterval(fetchData, 10000);
 
     return () => {
-      // unmount
+      clearInterval(interval);
     };
-  }, []);
+  }, [selectedNamespace]);
 
   const onToggleClick = () => {
     setNamespaceSelectIsOpen(!isNamespaceSelectOpen);
@@ -81,14 +89,12 @@ export default function Vm() {
         setAlert({ type: 'danger', message: `Failed to ${action} VM: ${result.message}` });
       } else {
         setAlert({ type: 'success', message: `VM ${action} command sent successfully` });
-        // Refresh VM list after a delay
-        setTimeout(async () => {
-          const fetched = await getVms();
-          setVms(fetched);
-          if (selectedNamespace !== 'Select namespace') {
-            setFilteredVms(fetched.filter(v => v.namespace === selectedNamespace));
-          }
-        }, 2000);
+        // Immediate refresh after action, then polling will continue updates
+        const fetched = await getVms();
+        setVms(fetched);
+        if (selectedNamespace !== 'Select namespace') {
+          setFilteredVms(fetched.filter(v => v.namespace === selectedNamespace));
+        }
       }
     } catch (error) {
       setAlert({ type: 'danger', message: `Error: ${error.message}` });

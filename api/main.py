@@ -66,21 +66,17 @@ def fetch_vmnamespaces() -> list[dict[str, str]]:
 def fetch_vms() -> list[dict[str, str]]:
     logger.info("fetch_vms")
     api = client.CustomObjectsApi()
-    instances = api.list_cluster_custom_object(group="kubevirt.io", version="v1", plural="virtualmachineinstances")
 
-    # Get VirtualMachines (not instances) to check running state
+    # Get VirtualMachines (persistent objects that exist even when stopped)
     vms = api.list_cluster_custom_object(group="kubevirt.io", version="v1", plural="virtualmachines")
-    vm_running_state = {}
-    for vm in vms['items']:
-        vm_name = vm['metadata']['name']
-        vm_namespace = vm['metadata']['namespace']
-        # Check runStrategy (newer) or running (deprecated) field
-        run_strategy = vm['spec'].get('runStrategy', None)
-        if run_strategy:
-            # runStrategy: Always, RerunOnFailure, Manual, Halted
-            vm_running_state[f"{vm_namespace}/{vm_name}"] = run_strategy in ['Always', 'RerunOnFailure']
-        else:
-            vm_running_state[f"{vm_namespace}/{vm_name}"] = vm['spec'].get('running', False)
+
+    # Get VirtualMachineInstances (only exist when running)
+    instances = api.list_cluster_custom_object(group="kubevirt.io", version="v1", plural="virtualmachineinstances")
+    instance_by_name = {}
+    for instance in instances['items']:
+        instance_name = instance['metadata']['name']
+        instance_namespace = instance['metadata']['namespace']
+        instance_by_name[f"{instance_namespace}/{instance_name}"] = instance
 
     # map dv by its name
     data_volume_by_name = {}
@@ -89,34 +85,59 @@ def fetch_vms() -> list[dict[str, str]]:
         dv_name = dv['metadata']['name']
         data_volume_by_name[dv_name] = dv['spec']
 
-    # map dv for each instance
-    volume_mapping_to_instance = {}
-    for instance in instances['items']:
-        instance_name = instance['metadata']['name']
+    result = []
+    for vm in vms['items']:
+        vm_name = vm['metadata']['name']
+        vm_namespace = vm['metadata']['namespace']
+        vm_key = f"{vm_namespace}/{vm_name}"
+        instance = instance_by_name.get(vm_key)
+
+        # Determine status
+        if instance:
+            status = instance['status'].get('phase', 'Unknown')
+        else:
+            # No instance means VM is stopped
+            run_strategy = vm['spec'].get('runStrategy', None)
+            if run_strategy == 'Halted':
+                status = 'Stopped'
+            else:
+                # Check if it's supposed to be running but isn't yet
+                running = vm['spec'].get('running', False)
+                if running or run_strategy in ['Always', 'RerunOnFailure']:
+                    status = 'Pending'
+                else:
+                    status = 'Stopped'
+
+        # Get VM spec from VM object or instance
+        spec = instance['spec'] if instance else vm['spec']['template']['spec']
+
+        # Map data volumes
         volumes = []
-        for vol in instance['spec']['volumes']:
+        for vol in spec.get('volumes', []):
             dv = vol.get('dataVolume', None)
             if dv:
                 dv_name = dv['name']
-                dv = data_volume_by_name[dv_name]
-                dv['name'] = dv_name
-                volumes.append(dv)
-        volume_mapping_to_instance[instance_name] = volumes
+                if dv_name in data_volume_by_name:
+                    dv_spec = data_volume_by_name[dv_name].copy()
+                    dv_spec['name'] = dv_name
+                    volumes.append(dv_spec)
 
-    return list(map(lambda instance: {
-        "name": instance['metadata']['name'],
-        "namespace": instance['metadata']['namespace'],
-        "cpu": instance['spec']['domain']['cpu']['cores'],
-        "memory": instance['spec']['domain']['memory']['guest'],
-        "created_at": instance['metadata']['creationTimestamp'],
-        "os": instance['metadata']['annotations']['vm.kubevirt.io/os'],
-        "disks": instance['spec']['domain']['devices']['disks'],
-        "data_volumes": volume_mapping_to_instance[instance['metadata']['name']],
-        "interfaces": instance['spec']['domain']['devices']['interfaces'],
-        "machine_type": instance['spec']['domain']['machine']['type'],
-        "running": vm_running_state.get(f"{instance['metadata']['namespace']}/{instance['metadata']['name']}", False),
-        "status": "Running" if instance['status'].get('phase') == 'Running' else instance['status'].get('phase', 'Unknown'),
-    }, instances['items']))
+        result.append({
+            "name": vm_name,
+            "namespace": vm_namespace,
+            "cpu": spec.get('domain', {}).get('cpu', {}).get('cores', 0),
+            "memory": spec.get('domain', {}).get('memory', {}).get('guest', '0Mi'),
+            "created_at": vm['metadata']['creationTimestamp'],
+            "os": vm['metadata'].get('annotations', {}).get('vm.kubevirt.io/os', 'Unknown'),
+            "disks": spec.get('domain', {}).get('devices', {}).get('disks', []),
+            "data_volumes": volumes,
+            "interfaces": spec.get('domain', {}).get('devices', {}).get('interfaces', []),
+            "machine_type": spec.get('domain', {}).get('machine', {}).get('type', 'Unknown'),
+            "running": status not in ['Stopped', 'Halted'],
+            "status": status,
+        })
+
+    return result
 
 def fetch_nodes() -> list[dict[str, str]]:
     logger.info("fetch_nodes")

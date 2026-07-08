@@ -35,11 +35,21 @@ export default function VmDetail() {
   const [operatingVm, setOperatingVm] = useState(false);
 
   useEffect(() => {
-    (async () => {
+    const fetchVmData = async () => {
       const vms = await getVms();
       const foundVm = vms.find(v => v.namespace === namespace && v.name === name);
       setVm(foundVm);
-    })();
+    };
+
+    // Initial fetch
+    fetchVmData();
+
+    // Poll every 10 seconds to update VM status
+    const interval = setInterval(fetchVmData, 10000);
+
+    return () => {
+      clearInterval(interval);
+    };
   }, [namespace, name]);
 
   const handleVmAction = async (action) => {
@@ -52,12 +62,10 @@ export default function VmDetail() {
       } else if (action === 'restart') {
         await restartVm(namespace, name);
       }
-      // Refresh VM data
-      setTimeout(async () => {
-        const vms = await getVms();
-        const foundVm = vms.find(v => v.namespace === namespace && v.name === name);
-        setVm(foundVm);
-      }, 2000);
+      // Immediate refresh after action, then polling will continue updates
+      const vms = await getVms();
+      const foundVm = vms.find(v => v.namespace === namespace && v.name === name);
+      setVm(foundVm);
     } finally {
       setOperatingVm(false);
     }
