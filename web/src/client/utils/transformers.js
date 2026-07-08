@@ -11,8 +11,14 @@ export const transformVms = (fetched) => {
       os: item.os,
       cpu: item.cpu,
       memory: item.memory,
+      createdAt: item.created_at,
+      machineType: item.machine_type,
+      disks: item.disks || [],
       dataVolumes: (item.data_volumes || []).map(i => `${i.name} (${i['storage']['resources']['requests']['storage']})`).join(', '),
-      interfaces: (item.interfaces || []).map(i => `${i.name} (${i.model})`).join(', ')
+      interfaces: (item.interfaces || []).map(i => `${i.name} (${i.model})`).join(', '),
+      // Keep raw data for detail view
+      rawDataVolumes: item.data_volumes || [],
+      rawInterfaces: item.interfaces || []
     };
   };
   return fetched.map(transform);

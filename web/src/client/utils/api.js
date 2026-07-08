@@ -21,3 +21,24 @@ export const fetchVmnamespaces = async() => {
   const resp = await response.json();
   return resp['vmnamespaces'];
 }
+
+export const startVm = async(namespace, name) => {
+  const response = await fetch(`/api/vms/${namespace}/${name}/start`, {
+    method: 'POST',
+  });
+  return await response.json();
+}
+
+export const stopVm = async(namespace, name) => {
+  const response = await fetch(`/api/vms/${namespace}/${name}/stop`, {
+    method: 'POST',
+  });
+  return await response.json();
+}
+
+export const restartVm = async(namespace, name) => {
+  const response = await fetch(`/api/vms/${namespace}/${name}/restart`, {
+    method: 'POST',
+  });
+  return await response.json();
+}

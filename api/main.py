@@ -1,4 +1,5 @@
 from kubernetes import client, config
+from kubernetes.config.config_exception import ConfigException
 from typing import Union
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,9 +25,16 @@ stream_handler.setFormatter(Formatter("%(asctime)s [%(levelname)s] %(name)s: %(m
 logger.addHandler(stream_handler)
 logger.info("API is starting up")
 
-if environ.get("PYTHON_ENV", "PRODUCTION") == "PRODUCTION":
+try:
     logger.info("loaded auth")
     config.load_incluster_config()
+except ConfigException:
+    try:
+        # Fall back to local kubeconfig (usually ~/.kube/config) for local development
+        config.load_kube_config()
+        logger.info("loaded local kubeconfig")
+    except ConfigException:
+        raise RuntimeError("Could not configure Kubernetes client. No config found.")
 
 def list_all_pods():
     logger.info("list_all_pods")
@@ -50,9 +58,10 @@ def fetch_vmnamespaces() -> list[dict[str, str]]:
     logger.info("fetch_vmnamespaces")
     api = client.CustomObjectsApi()
     instances = api.list_cluster_custom_object(group="kubevirt.io", version="v1", plural="virtualmachineinstances")
+    unique_namespaces = list(set(instance['metadata']['namespace'] for instance in instances['items']))
     return list(map(lambda instance: {
-        "namespace": instance['metadata']['namespace']
-    }, instances['items']))
+        "namespace": instance
+    }, unique_namespaces))
 
 def fetch_vms() -> list[dict[str, str]]:
     logger.info("fetch_vms")
@@ -143,3 +152,75 @@ def get_nodes():
 @app.get("/storages")
 def get_storages():
     return {"storages": fetch_storages()}
+
+@app.post("/vms/{namespace}/{name}/start")
+def start_vm(namespace: str, name: str):
+    logger.info(f"start_vm: {namespace}/{name}")
+    api = client.CustomObjectsApi()
+    try:
+        # Get the VirtualMachine (not instance)
+        vm = api.get_namespaced_custom_object(
+            group="kubevirt.io",
+            version="v1",
+            namespace=namespace,
+            plural="virtualmachines",
+            name=name
+        )
+        # Update spec.running to true
+        vm['spec']['running'] = True
+        api.patch_namespaced_custom_object(
+            group="kubevirt.io",
+            version="v1",
+            namespace=namespace,
+            plural="virtualmachines",
+            name=name,
+            body=vm
+        )
+        return {"status": "started", "namespace": namespace, "name": name}
+    except Exception as e:
+        logger.error(f"Error starting VM: {e}")
+        return {"status": "error", "message": str(e)}
+
+@app.post("/vms/{namespace}/{name}/stop")
+def stop_vm(namespace: str, name: str):
+    logger.info(f"stop_vm: {namespace}/{name}")
+    api = client.CustomObjectsApi()
+    try:
+        vm = api.get_namespaced_custom_object(
+            group="kubevirt.io",
+            version="v1",
+            namespace=namespace,
+            plural="virtualmachines",
+            name=name
+        )
+        vm['spec']['running'] = False
+        api.patch_namespaced_custom_object(
+            group="kubevirt.io",
+            version="v1",
+            namespace=namespace,
+            plural="virtualmachines",
+            name=name,
+            body=vm
+        )
+        return {"status": "stopped", "namespace": namespace, "name": name}
+    except Exception as e:
+        logger.error(f"Error stopping VM: {e}")
+        return {"status": "error", "message": str(e)}
+
+@app.post("/vms/{namespace}/{name}/restart")
+def restart_vm(namespace: str, name: str):
+    logger.info(f"restart_vm: {namespace}/{name}")
+    api = client.CustomObjectsApi()
+    try:
+        # Delete the VMI to trigger a restart
+        api.delete_namespaced_custom_object(
+            group="kubevirt.io",
+            version="v1",
+            namespace=namespace,
+            plural="virtualmachineinstances",
+            name=name
+        )
+        return {"status": "restarted", "namespace": namespace, "name": name}
+    except Exception as e:
+        logger.error(f"Error restarting VM: {e}")
+        return {"status": "error", "message": str(e)}

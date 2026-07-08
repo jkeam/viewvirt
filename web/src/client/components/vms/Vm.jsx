@@ -1,5 +1,6 @@
 import { useAtom } from 'jotai';
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   PageSection,
   Select,
@@ -9,9 +10,20 @@ import {
   Panel,
   PanelMain,
   PanelMainBody,
+  Button,
+  ButtonVariant,
+  Flex,
+  FlexItem,
+  Alert,
 } from '@patternfly/react-core';
+import {
+  PlayIcon,
+  StopIcon,
+  RedoIcon,
+} from '@patternfly/react-icons';
 import BasicTable from '../common/BasicTable';
-import { getVms, vmsAtom, getVmnamespaces, vmnamespacesAtom } from '../../utils/store.js'
+import { getVms, vmsAtom, getVmnamespaces, vmnamespacesAtom } from '../../utils/store.js';
+import { startVm, stopVm, restartVm } from '../../utils/api.js';
 
 export default function Vm() {
   const [vms, setVms] = useAtom(vmsAtom);
@@ -19,6 +31,8 @@ export default function Vm() {
   const [filteredVms, setFilteredVms] = useState([]);
   const [isNamespaceSelectOpen, setNamespaceSelectIsOpen] = useState(false);
   const [selectedNamespace, setSelectedNamespace] = useState('Select namespace');
+  const [alert, setAlert] = useState(null);
+  const [operatingVm, setOperatingVm] = useState(null);
   useEffect(() => {
     (async () => {
       const fetched = await getVms();
@@ -49,20 +63,100 @@ export default function Vm() {
     </MenuToggle>
   );
 
-  const cols = ['Name', 'OS', 'CPUs', 'Memory', 'Storage', 'Network'];
+  const handleVmAction = async (action, namespace, name) => {
+    setOperatingVm(name);
+    setAlert(null);
+    try {
+      let result;
+      if (action === 'start') {
+        result = await startVm(namespace, name);
+      } else if (action === 'stop') {
+        result = await stopVm(namespace, name);
+      } else if (action === 'restart') {
+        result = await restartVm(namespace, name);
+      }
+
+      if (result.status === 'error') {
+        setAlert({ type: 'danger', message: `Failed to ${action} VM: ${result.message}` });
+      } else {
+        setAlert({ type: 'success', message: `VM ${action} command sent successfully` });
+        // Refresh VM list after a delay
+        setTimeout(async () => {
+          const fetched = await getVms();
+          setVms(fetched);
+          if (selectedNamespace !== 'Select namespace') {
+            setFilteredVms(fetched.filter(v => v.namespace === selectedNamespace));
+          }
+        }, 2000);
+      }
+    } catch (error) {
+      setAlert({ type: 'danger', message: `Error: ${error.message}` });
+    } finally {
+      setOperatingVm(null);
+    }
+  };
+
+  const cols = ['Name', 'OS', 'CPUs', 'Memory', 'Storage', 'Network', 'Actions'];
   const rows = (item) => {
+    const isOperating = operatingVm === item.name;
     return [
-      item.name,
+      <Link to={`/vms/${item.namespace}/${item.name}`} key={`link-${item.name}`} style={{ color: '#06c', textDecoration: 'none' }}>
+        {item.name}
+      </Link>,
       item.os,
       item.cpu,
       item.memory,
       item.dataVolumes,
       item.interfaces,
+      <Flex spaceItems={{ default: 'spaceItemsXs' }} key={`actions-${item.name}`}>
+        <FlexItem>
+          <Button
+            variant={ButtonVariant.primary}
+            icon={<PlayIcon />}
+            onClick={() => handleVmAction('start', item.namespace, item.name)}
+            isDisabled={isOperating}
+            size="sm"
+          >
+            Start
+          </Button>
+        </FlexItem>
+        <FlexItem>
+          <Button
+            variant={ButtonVariant.danger}
+            icon={<StopIcon />}
+            onClick={() => handleVmAction('stop', item.namespace, item.name)}
+            isDisabled={isOperating}
+            size="sm"
+          >
+            Stop
+          </Button>
+        </FlexItem>
+        <FlexItem>
+          <Button
+            variant={ButtonVariant.secondary}
+            icon={<RedoIcon />}
+            onClick={() => handleVmAction('restart', item.namespace, item.name)}
+            isDisabled={isOperating}
+            size="sm"
+          >
+            Restart
+          </Button>
+        </FlexItem>
+      </Flex>,
     ];
   };
 
   return (
     <PageSection hasBodyWrapper={false}>
+      {alert && (
+        <Alert
+          variant={alert.type}
+          title={alert.message}
+          isInline
+          style={{ marginBottom: '16px' }}
+          actionClose={<Button variant="plain" onClick={() => setAlert(null)}>×</Button>}
+        />
+      )}
       <Panel>
         <PanelMain>
           <PanelMainBody>

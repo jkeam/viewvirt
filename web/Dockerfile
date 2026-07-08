@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/nodejs-22:9.5-1740412185
+FROM registry.access.redhat.com/ubi9/nodejs-24:9.8-1783399006
 
 USER root
 

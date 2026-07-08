@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import Home from './components/Home.jsx';
 import Vm from './components/vms/Vm.jsx';
+import VmDetail from './components/vms/VmDetail.jsx';
 import Node from './components/nodes/Node.jsx';
 import Storage from './components/storages/Storage.jsx';
 import Network from './components/networks/Network.jsx';
@@ -22,6 +23,9 @@ const router = createBrowserRouter([
   }, {
     path: "/vms",
     element: <App title="Virtual Machines" subtitle="VM Detail"><Vm /></App>,
+  }, {
+    path: "/vms/:namespace/:name",
+    element: <App title="Virtual Machine Details" subtitle="VM Information"><VmDetail /></App>,
   }, {
     path: "/storages",
     element: <App title="Storage" subtitle="Storage Detail"><Storage /></App>,
