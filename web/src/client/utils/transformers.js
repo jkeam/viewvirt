@@ -32,10 +32,18 @@ export const transformHosts = (fetched) => {
   }
 
   const transform = (item) => {
+    // Convert memory from Ki to Gi for readability
+    let memoryDisplay = item.memory;
+    if (item.memory && item.memory.includes('Ki')) {
+      const memoryKi = parseInt(item.memory.replace('Ki', ''));
+      const memoryGi = (memoryKi / (1024 * 1024)).toFixed(2);
+      memoryDisplay = `${memoryGi} Gi`;
+    }
+
     return {
       name: item.name,
       cpu: item.cpu,
-      memory: item.memory,
+      memory: memoryDisplay,
       hostIp: item.host_ip
     };
   };
