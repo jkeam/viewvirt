@@ -19,6 +19,7 @@ import {
   ServerIcon,
   DatabaseIcon,
   NetworkIcon,
+  CpuIcon,
 } from '@patternfly/react-icons';
 import { getVms, vmsAtom, getHosts, hostsAtom, getStorages, storagesAtom } from '../utils/store.js';
 
@@ -32,8 +33,10 @@ export default function Home() {
     stoppedVMs: 0,
     totalHosts: 0,
     totalCPU: 0,
+    usedCPU: 0,
     totalMemory: '0',
     totalStorage: 0,
+    totalStorageSize: '0',
   });
 
   useEffect(() => {
@@ -63,14 +66,30 @@ export default function Home() {
       const runningVMs = fetchedVms.filter(vm => vm.status === 'Running').length;
       const stoppedVMs = fetchedVms.filter(vm => vm.status === 'Stopped').length;
 
+      // Calculate total CPUs used by all VMs
+      const usedCPU = fetchedVms.reduce((sum, vm) => sum + parseInt(vm.cpu || 0), 0);
+
+      // Calculate total storage size
+      const totalStorageSize = fetchedStorages.reduce((sum, storage) => {
+        const storageStr = storage.storage || '0Gi';
+        // Storage is in Gi format (e.g., "10Gi")
+        if (storageStr.includes('Gi')) {
+          const storageVal = parseFloat(storageStr.replace('Gi', ''));
+          return sum + storageVal;
+        }
+        return sum;
+      }, 0);
+
       setSummary({
         totalVMs: fetchedVms.length,
         runningVMs,
         stoppedVMs,
         totalHosts: fetchedHosts.length,
         totalCPU,
+        usedCPU,
         totalMemory: `${totalMemory.toFixed(2)} GB`,
         totalStorage: fetchedStorages.length,
+        totalStorageSize: `${totalStorageSize.toFixed(0)} GB`,
       });
     })();
 
@@ -152,11 +171,11 @@ export default function Home() {
         </GridItem>
         <GridItem lg={3} md={6} sm={12}>
           <SummaryCard
-            icon={ServerIcon}
-            title="Hosts"
-            value={summary.totalHosts}
-            subtitle={`${summary.totalCPU} total CPUs`}
-            color="#3e8635"
+            icon={CpuIcon}
+            title="CPU"
+            value={`${summary.totalCPU - summary.usedCPU} free`}
+            subtitle={`${summary.totalCPU} total, ${summary.usedCPU} used by VMs`}
+            color="#8476d1"
             linkTo="/hosts"
           />
         </GridItem>
@@ -164,8 +183,8 @@ export default function Home() {
           <SummaryCard
             icon={DatabaseIcon}
             title="Storage"
-            value={summary.totalStorage}
-            subtitle="data volumes"
+            value={`${summary.totalStorage} devices`}
+            subtitle={`${summary.totalStorageSize} total allocated`}
             color="#c9190b"
             linkTo="/storages"
           />
@@ -177,6 +196,16 @@ export default function Home() {
             value={summary.totalMemory}
             subtitle="total capacity"
             color="#f0ab00"
+            linkTo="/hosts"
+          />
+        </GridItem>
+        <GridItem lg={3} md={6} sm={12}>
+          <SummaryCard
+            icon={ServerIcon}
+            title="Hosts"
+            value={summary.totalHosts}
+            subtitle={`${summary.totalCPU} total CPUs`}
+            color="#3e8635"
             linkTo="/hosts"
           />
         </GridItem>
