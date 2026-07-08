@@ -1,5 +1,6 @@
 import { useAtom } from 'jotai';
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   PageSection,
   Gallery,
@@ -68,36 +69,57 @@ export default function Home() {
     };
   }, []);
 
-  const SummaryCard = ({ icon: Icon, title, value, subtitle, color = 'blue' }) => (
-    <Card isCompact>
-      <CardBody>
-        <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
-          <FlexItem>
-            <Flex alignItems={{ default: 'alignItemsCenter' }}>
+  const SummaryCard = ({ icon: Icon, title, value, subtitle, color = 'blue', linkTo }) => {
+    const [isHovered, setIsHovered] = useState(false);
+
+    return (
+      <Link to={linkTo} style={{ textDecoration: 'none', color: 'inherit' }}>
+        <Card
+          isCompact
+          isClickable
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          style={{
+            cursor: 'pointer',
+            transition: 'all 0.2s ease-in-out',
+            transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
+            boxShadow: isHovered
+              ? '0 8px 16px rgba(0, 0, 0, 0.15)'
+              : '0 2px 4px rgba(0, 0, 0, 0.1)',
+            border: isHovered ? `2px solid ${color}` : '1px solid #d2d2d2',
+            backgroundColor: isHovered ? '#f5f5f5' : '#fff',
+          }}
+        >
+          <CardBody style={{ padding: '24px' }}>
+            <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
               <FlexItem>
-                <Icon size="lg" color={color} />
+                <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                  <FlexItem>
+                    <Icon size="lg" color={color} />
+                  </FlexItem>
+                  <FlexItem>
+                    <small style={{ fontWeight: '600', fontSize: '0.9rem' }}>{title}</small>
+                  </FlexItem>
+                </Flex>
               </FlexItem>
               <FlexItem>
-                <small>{title}</small>
+                <Title headingLevel="h2" size="2xl" style={{ fontWeight: 'bold' }}>
+                  {value}
+                </Title>
               </FlexItem>
+              {subtitle && (
+                <FlexItem>
+                  <small style={{ color: '#6a6e73', fontSize: '0.85rem' }}>
+                    {subtitle}
+                  </small>
+                </FlexItem>
+              )}
             </Flex>
-          </FlexItem>
-          <FlexItem>
-            <Title headingLevel="h2" size="2xl">
-              {value}
-            </Title>
-          </FlexItem>
-          {subtitle && (
-            <FlexItem>
-              <small style={{ color: '#6a6e73' }}>
-                {subtitle}
-              </small>
-            </FlexItem>
-          )}
-        </Flex>
-      </CardBody>
-    </Card>
-  );
+          </CardBody>
+        </Card>
+      </Link>
+    );
+  };
 
   return (
     <PageSection hasBodyWrapper={false}>
@@ -115,6 +137,7 @@ export default function Home() {
             value={summary.totalVMs}
             subtitle={`${summary.runningVMs} running`}
             color="#06c"
+            linkTo="/vms"
           />
         </GridItem>
         <GridItem lg={3} md={6} sm={12}>
@@ -124,6 +147,7 @@ export default function Home() {
             value={summary.totalHosts}
             subtitle={`${summary.totalCPU} total CPUs`}
             color="#3e8635"
+            linkTo="/hosts"
           />
         </GridItem>
         <GridItem lg={3} md={6} sm={12}>
@@ -133,6 +157,7 @@ export default function Home() {
             value={summary.totalStorage}
             subtitle="data volumes"
             color="#c9190b"
+            linkTo="/storages"
           />
         </GridItem>
         <GridItem lg={3} md={6} sm={12}>
@@ -142,6 +167,7 @@ export default function Home() {
             value={summary.totalMemory}
             subtitle="total capacity"
             color="#f0ab00"
+            linkTo="/hosts"
           />
         </GridItem>
       </Grid>
