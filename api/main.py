@@ -189,7 +189,7 @@ def fetch_hosts() -> list[dict[str, str]]:
     hosts = api.list_node()
     return list(map(lambda host: {
         "name": host.metadata.name,
-        "cpu": host.status.allocatable['cpu'],
+        "cpu": float(host.status.allocatable['cpu'].rstrip("m")) / 1000,
         "memory": host.status.allocatable['memory'],
         "host_ip": list(filter(lambda address: (address.type == 'InternalIP'), host.status.addresses))[0].address
     }, hosts.items))
