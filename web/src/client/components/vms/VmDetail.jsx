@@ -71,6 +71,23 @@ export default function VmDetail() {
     );
   }
 
+  const getStatusDescription = (status) => {
+    switch (status) {
+      case 'Running':
+        return 'The virtual machine is currently running and operational.';
+      case 'Stopped':
+        return 'The virtual machine is stopped and not consuming resources.';
+      case 'Pending':
+        return 'The virtual machine is starting up or being provisioned.';
+      case 'Terminating':
+        return 'The virtual machine is in the process of shutting down.';
+      case 'Failed':
+        return 'The virtual machine has encountered an error.';
+      default:
+        return 'The virtual machine is in an unknown state.';
+    }
+  };
+
   return (
     <PageSection hasBodyWrapper={false}>
       <Grid hasGutter>
@@ -80,9 +97,20 @@ export default function VmDetail() {
               <Title headingLevel="h1" size="2xl">
                 {vm.name}
               </Title>
-              <Label color="blue" style={{ marginTop: '8px' }}>
-                {vm.namespace}
-              </Label>
+              <div style={{ marginTop: '8px' }}>
+                <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+                  <FlexItem>
+                    <Label color="blue">
+                      {vm.namespace}
+                    </Label>
+                  </FlexItem>
+                  <FlexItem>
+                    <Label color={vm.status === 'Running' ? 'green' : vm.status === 'Stopped' ? 'grey' : 'orange'}>
+                      {vm.status}
+                    </Label>
+                  </FlexItem>
+                </Flex>
+              </div>
             </FlexItem>
             <FlexItem>
               <Flex spaceItems={{ default: 'spaceItemsSm' }}>
@@ -91,7 +119,7 @@ export default function VmDetail() {
                     variant="primary"
                     icon={<PlayIcon />}
                     onClick={() => handleVmAction('start')}
-                    isDisabled={operatingVm}
+                    isDisabled={operatingVm || vm.status === 'Running'}
                   >
                     Start
                   </Button>
@@ -101,7 +129,7 @@ export default function VmDetail() {
                     variant="danger"
                     icon={<StopIcon />}
                     onClick={() => handleVmAction('stop')}
-                    isDisabled={operatingVm}
+                    isDisabled={operatingVm || vm.status !== 'Running'}
                   >
                     Stop
                   </Button>
@@ -111,7 +139,7 @@ export default function VmDetail() {
                     variant="secondary"
                     icon={<RedoIcon />}
                     onClick={() => handleVmAction('restart')}
-                    isDisabled={operatingVm}
+                    isDisabled={operatingVm || vm.status !== 'Running'}
                   >
                     Restart
                   </Button>
@@ -140,6 +168,19 @@ export default function VmDetail() {
                         <DescriptionListGroup>
                           <DescriptionListTerm>Namespace</DescriptionListTerm>
                           <DescriptionListDescription>{vm.namespace}</DescriptionListDescription>
+                        </DescriptionListGroup>
+                        <DescriptionListGroup>
+                          <DescriptionListTerm>Status</DescriptionListTerm>
+                          <DescriptionListDescription>
+                            <div>
+                              <Label color={vm.status === 'Running' ? 'green' : vm.status === 'Stopped' ? 'grey' : 'orange'}>
+                                {vm.status}
+                              </Label>
+                              <div style={{ marginTop: '8px', color: '#6a6e73', fontSize: '0.875rem' }}>
+                                {getStatusDescription(vm.status)}
+                              </div>
+                            </div>
+                          </DescriptionListDescription>
                         </DescriptionListGroup>
                         <DescriptionListGroup>
                           <DescriptionListTerm>Operating System</DescriptionListTerm>

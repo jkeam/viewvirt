@@ -15,6 +15,7 @@ import {
   Flex,
   FlexItem,
   Alert,
+  Label,
 } from '@patternfly/react-core';
 import {
   PlayIcon,
@@ -96,13 +97,17 @@ export default function Vm() {
     }
   };
 
-  const cols = ['Name', 'OS', 'CPUs', 'Memory', 'Storage', 'Network', 'Actions'];
+  const cols = ['Name', 'Status', 'OS', 'CPUs', 'Memory', 'Storage', 'Network', 'Actions'];
   const rows = (item) => {
     const isOperating = operatingVm === item.name;
+    const statusColor = item.status === 'Running' ? 'green' : item.status === 'Stopped' ? 'grey' : 'orange';
     return [
       <Link to={`/vms/${item.namespace}/${item.name}`} key={`link-${item.name}`} style={{ color: '#06c', textDecoration: 'none' }}>
         {item.name}
       </Link>,
+      <Label color={statusColor} key={`status-${item.name}`}>
+        {item.status}
+      </Label>,
       item.os,
       item.cpu,
       item.memory,
@@ -114,7 +119,7 @@ export default function Vm() {
             variant={ButtonVariant.primary}
             icon={<PlayIcon />}
             onClick={() => handleVmAction('start', item.namespace, item.name)}
-            isDisabled={isOperating}
+            isDisabled={isOperating || item.status === 'Running'}
             size="sm"
           >
             Start
@@ -125,7 +130,7 @@ export default function Vm() {
             variant={ButtonVariant.danger}
             icon={<StopIcon />}
             onClick={() => handleVmAction('stop', item.namespace, item.name)}
-            isDisabled={isOperating}
+            isDisabled={isOperating || item.status !== 'Running'}
             size="sm"
           >
             Stop
@@ -136,7 +141,7 @@ export default function Vm() {
             variant={ButtonVariant.secondary}
             icon={<RedoIcon />}
             onClick={() => handleVmAction('restart', item.namespace, item.name)}
-            isDisabled={isOperating}
+            isDisabled={isOperating || item.status !== 'Running'}
             size="sm"
           >
             Restart

@@ -68,6 +68,14 @@ def fetch_vms() -> list[dict[str, str]]:
     api = client.CustomObjectsApi()
     instances = api.list_cluster_custom_object(group="kubevirt.io", version="v1", plural="virtualmachineinstances")
 
+    # Get VirtualMachines (not instances) to check running state
+    vms = api.list_cluster_custom_object(group="kubevirt.io", version="v1", plural="virtualmachines")
+    vm_running_state = {}
+    for vm in vms['items']:
+        vm_name = vm['metadata']['name']
+        vm_namespace = vm['metadata']['namespace']
+        vm_running_state[f"{vm_namespace}/{vm_name}"] = vm['spec'].get('running', False)
+
     # map dv by its name
     data_volume_by_name = {}
     data_volumes = api.list_cluster_custom_object(group="cdi.kubevirt.io", version="v1beta1", plural="datavolumes")
@@ -100,6 +108,8 @@ def fetch_vms() -> list[dict[str, str]]:
         "data_volumes": volume_mapping_to_instance[instance['metadata']['name']],
         "interfaces": instance['spec']['domain']['devices']['interfaces'],
         "machine_type": instance['spec']['domain']['machine']['type'],
+        "running": vm_running_state.get(f"{instance['metadata']['namespace']}/{instance['metadata']['name']}", False),
+        "status": "Running" if instance['status'].get('phase') == 'Running' else instance['status'].get('phase', 'Unknown'),
     }, instances['items']))
 
 def fetch_nodes() -> list[dict[str, str]]:

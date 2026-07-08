@@ -7,7 +7,7 @@ Viewer for KubeVirt.
 ### Prerequisites
 
 1. Python v3.12
-2. Node v22 or Node v24
+2. Node v24
 
 ### Backend
 

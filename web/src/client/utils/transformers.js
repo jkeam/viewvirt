@@ -14,6 +14,8 @@ export const transformVms = (fetched) => {
       createdAt: item.created_at,
       machineType: item.machine_type,
       disks: item.disks || [],
+      running: item.running,
+      status: item.status,
       dataVolumes: (item.data_volumes || []).map(i => `${i.name} (${i['storage']['resources']['requests']['storage']})`).join(', '),
       interfaces: (item.interfaces || []).map(i => `${i.name} (${i.model})`).join(', '),
       // Keep raw data for detail view
