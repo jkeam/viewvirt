@@ -278,3 +278,36 @@ def restart_vm(namespace: str, name: str):
     except Exception as e:
         logger.error(f"Error restarting VM: {e}")
         return {"status": "error", "message": str(e)}
+
+@app.get("/vms/{namespace}/{name}/vnc")
+def get_vnc_info(namespace: str, name: str):
+    logger.info(f"get_vnc_info: {namespace}/{name}")
+    try:
+        # Get the VirtualMachineInstance to check if it's running
+        api = client.CustomObjectsApi()
+        vmi = api.get_namespaced_custom_object(
+            group="kubevirt.io",
+            version="v1",
+            namespace=namespace,
+            plural="virtualmachineinstances",
+            name=name
+        )
+
+        # Get the node the VM is running on
+        node_name = vmi.get('status', {}).get('nodeName', None)
+
+        if not node_name:
+            return {"status": "error", "message": "VM is not running on any node"}
+
+        # VNC is available via virtctl or KubeVirt's VNC proxy
+        # For simplicity, we'll return connection info
+        return {
+            "status": "available",
+            "namespace": namespace,
+            "name": name,
+            "node": node_name,
+            "message": "VNC console available"
+        }
+    except Exception as e:
+        logger.error(f"Error getting VNC info: {e}")
+        return {"status": "error", "message": str(e)}

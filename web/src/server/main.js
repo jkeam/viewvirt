@@ -77,6 +77,12 @@ app.post("/api/vms/:namespace/:name/restart", async (req, res) => {
   res.json(json);
 });
 
+app.get("/api/vms/:namespace/:name/vnc", async (req, res) => {
+  const { namespace, name } = req.params;
+  const json = await baseGet(`/vms/${namespace}/${name}/vnc`);
+  res.json(json);
+});
+
 ViteExpress.listen(app, 3000, () =>
   console.log("Server is listening on port 3000..."),
 );
