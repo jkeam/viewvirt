@@ -40,7 +40,9 @@ export default function Vm() {
     const fetchData = async () => {
       const fetched = await getVms();
       setVms(fetched);
-      if (selectedNamespace !== 'Select namespace') {
+      if (selectedNamespace === 'All Namespaces') {
+        setFilteredVms(fetched);
+      } else if (selectedNamespace !== 'Select namespace') {
         setFilteredVms(fetched.filter(v => v.namespace === selectedNamespace));
       }
       const fetchVmnamespaces = await getVmnamespaces();
@@ -72,10 +74,14 @@ export default function Vm() {
 
   const onSelect = (_event, value) => {
     setSelectedNamespace(value);
-    setFilteredVms(vms.filter(v => v.namespace === value));
+    if (value === 'All Namespaces') {
+      setFilteredVms(vms);
+      navigate('/vms');
+    } else {
+      setFilteredVms(vms.filter(v => v.namespace === value));
+      navigate(`/vms/ns/${value}`);
+    }
     setNamespaceSelectIsOpen(false);
-    // Update URL to include namespace
-    navigate(`/vms/ns/${value}`);
   };
 
   const toggle = toggleRef => (
@@ -211,6 +217,7 @@ export default function Vm() {
               shouldFocusToggleOnSelect
             >
               <SelectList>
+                <SelectOption value="All Namespaces" key="all-namespaces">All Namespaces</SelectOption>
                 {vmnamespaces.map(v => <SelectOption value={v} key={v}>{v}</SelectOption>)}
               </SelectList>
             </Select>
