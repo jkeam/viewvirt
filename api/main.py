@@ -74,7 +74,13 @@ def fetch_vms() -> list[dict[str, str]]:
     for vm in vms['items']:
         vm_name = vm['metadata']['name']
         vm_namespace = vm['metadata']['namespace']
-        vm_running_state[f"{vm_namespace}/{vm_name}"] = vm['spec'].get('running', False)
+        # Check runStrategy (newer) or running (deprecated) field
+        run_strategy = vm['spec'].get('runStrategy', None)
+        if run_strategy:
+            # runStrategy: Always, RerunOnFailure, Manual, Halted
+            vm_running_state[f"{vm_namespace}/{vm_name}"] = run_strategy in ['Always', 'RerunOnFailure']
+        else:
+            vm_running_state[f"{vm_namespace}/{vm_name}"] = vm['spec'].get('running', False)
 
     # map dv by its name
     data_volume_by_name = {}
@@ -168,23 +174,15 @@ def start_vm(namespace: str, name: str):
     logger.info(f"start_vm: {namespace}/{name}")
     api = client.CustomObjectsApi()
     try:
-        # Get the VirtualMachine (not instance)
-        vm = api.get_namespaced_custom_object(
-            group="kubevirt.io",
-            version="v1",
-            namespace=namespace,
-            plural="virtualmachines",
-            name=name
-        )
-        # Update spec.running to true
-        vm['spec']['running'] = True
+        # Use runStrategy instead of the deprecated running field
+        # runStrategy: Always means the VM should always be running
         api.patch_namespaced_custom_object(
             group="kubevirt.io",
             version="v1",
             namespace=namespace,
             plural="virtualmachines",
             name=name,
-            body=vm
+            body={"spec": {"runStrategy": "Always"}}
         )
         return {"status": "started", "namespace": namespace, "name": name}
     except Exception as e:
@@ -196,21 +194,15 @@ def stop_vm(namespace: str, name: str):
     logger.info(f"stop_vm: {namespace}/{name}")
     api = client.CustomObjectsApi()
     try:
-        vm = api.get_namespaced_custom_object(
-            group="kubevirt.io",
-            version="v1",
-            namespace=namespace,
-            plural="virtualmachines",
-            name=name
-        )
-        vm['spec']['running'] = False
+        # Use runStrategy instead of the deprecated running field
+        # runStrategy: Halted means the VM should be stopped
         api.patch_namespaced_custom_object(
             group="kubevirt.io",
             version="v1",
             namespace=namespace,
             plural="virtualmachines",
             name=name,
-            body=vm
+            body={"spec": {"runStrategy": "Halted"}}
         )
         return {"status": "stopped", "namespace": namespace, "name": name}
     except Exception as e:

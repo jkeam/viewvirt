@@ -21,6 +21,20 @@ const baseGet = async (path) => {
   }
 };
 
+const basePost = async (path) => {
+  try {
+    const url = `${API_BASE_URL}${path}`;
+    const options = {
+      method: 'POST'
+    };
+    const callResponse = await fetch(url, options);
+    const json = await callResponse.json();
+    return json;
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 app.get("/api/healthz", (req, res) => {
   res.json({"status": "alive"});
 });
@@ -42,6 +56,24 @@ app.get("/api/storages", async (req, res) => {
 
 app.get("/api/vmnamespaces", async (req, res) => {
   const json = await baseGet("/vmnamespaces");
+  res.json(json);
+});
+
+app.post("/api/vms/:namespace/:name/start", async (req, res) => {
+  const { namespace, name } = req.params;
+  const json = await basePost(`/vms/${namespace}/${name}/start`);
+  res.json(json);
+});
+
+app.post("/api/vms/:namespace/:name/stop", async (req, res) => {
+  const { namespace, name } = req.params;
+  const json = await basePost(`/vms/${namespace}/${name}/stop`);
+  res.json(json);
+});
+
+app.post("/api/vms/:namespace/:name/restart", async (req, res) => {
+  const { namespace, name } = req.params;
+  const json = await basePost(`/vms/${namespace}/${name}/restart`);
   res.json(json);
 });
 
