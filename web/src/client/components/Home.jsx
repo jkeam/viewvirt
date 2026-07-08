@@ -49,9 +49,13 @@ export default function Home() {
       // Calculate summary
       const totalCPU = fetchedHosts.reduce((sum, host) => sum + parseInt(host.cpu || 0), 0);
       const totalMemory = fetchedHosts.reduce((sum, host) => {
-        const memStr = host.memory || '0Ki';
-        const memVal = parseInt(memStr.replace(/[^0-9]/g, ''));
-        return sum + memVal;
+        const memStr = host.memory || '0 Gi';
+        // Memory is now in Gi format (e.g., "16.00 Gi")
+        if (memStr.includes('Gi')) {
+          const memVal = parseFloat(memStr.replace(' Gi', ''));
+          return sum + memVal;
+        }
+        return sum;
       }, 0);
 
       setSummary({
@@ -59,7 +63,7 @@ export default function Home() {
         runningVMs: fetchedVms.length,
         totalHosts: fetchedHosts.length,
         totalCPU,
-        totalMemory: `${Math.round(totalMemory / (1024 * 1024))} GB`,
+        totalMemory: `${totalMemory.toFixed(2)} GB`,
         totalStorage: fetchedStorages.length,
       });
     })();
