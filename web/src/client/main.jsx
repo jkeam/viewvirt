@@ -22,7 +22,10 @@ const router = createBrowserRouter([
     element: <App title="Nodes" subtitle="Node Detail"><Node /></App>,
   }, {
     path: "/vms",
-    element: <App title="Virtual Machines" subtitle="VM Detail"><Vm /></App>,
+    element: <App title="Virtual Machines" subtitle="VMs"><Vm /></App>,
+  }, {
+    path: "/vms/ns/:namespace",
+    element: <App title="Virtual Machines" subtitle="VMs"><Vm /></App>,
   }, {
     path: "/vms/:namespace/:name",
     element: <App title="Virtual Machine Details" subtitle="VM Information"><VmDetail /></App>,

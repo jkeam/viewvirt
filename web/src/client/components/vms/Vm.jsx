@@ -1,6 +1,6 @@
 import { useAtom } from 'jotai';
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   PageSection,
   Select,
@@ -27,11 +27,13 @@ import { getVms, vmsAtom, getVmnamespaces, vmnamespacesAtom } from '../../utils/
 import { startVm, stopVm, restartVm } from '../../utils/api.js';
 
 export default function Vm() {
+  const { namespace: urlNamespace } = useParams();
+  const navigate = useNavigate();
   const [vms, setVms] = useAtom(vmsAtom);
   const [vmnamespaces, setVmnamespaces] = useAtom(vmnamespacesAtom);
   const [filteredVms, setFilteredVms] = useState([]);
   const [isNamespaceSelectOpen, setNamespaceSelectIsOpen] = useState(false);
-  const [selectedNamespace, setSelectedNamespace] = useState('Select namespace');
+  const [selectedNamespace, setSelectedNamespace] = useState(urlNamespace || 'Select namespace');
   const [alert, setAlert] = useState(null);
   const [operatingVm, setOperatingVm] = useState(null);
   useEffect(() => {
@@ -56,6 +58,14 @@ export default function Vm() {
     };
   }, [selectedNamespace]);
 
+  // Update filtered VMs when URL namespace changes
+  useEffect(() => {
+    if (urlNamespace && vms.length > 0) {
+      setSelectedNamespace(urlNamespace);
+      setFilteredVms(vms.filter(v => v.namespace === urlNamespace));
+    }
+  }, [urlNamespace, vms]);
+
   const onToggleClick = () => {
     setNamespaceSelectIsOpen(!isNamespaceSelectOpen);
   };
@@ -64,6 +74,8 @@ export default function Vm() {
     setSelectedNamespace(value);
     setFilteredVms(vms.filter(v => v.namespace === value));
     setNamespaceSelectIsOpen(false);
+    // Update URL to include namespace
+    navigate(`/vms/ns/${value}`);
   };
 
   const toggle = toggleRef => (
