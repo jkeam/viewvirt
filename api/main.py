@@ -96,6 +96,11 @@ def fetch_vms() -> list[dict[str, str]]:
         run_strategy = vm['spec'].get('runStrategy', None)
         running = vm['spec'].get('running', None)
 
+        # Check VM status to see if it's actually trying to start
+        vm_status = vm.get('status', {})
+        vm_ready = vm_status.get('ready', False)
+        vm_created = vm_status.get('created', False)
+
         if instance:
             # Instance exists - check if it's being stopped
             instance_phase = instance['status'].get('phase', 'Unknown')
@@ -109,22 +114,19 @@ def fetch_vms() -> list[dict[str, str]]:
                 # Use the actual instance phase
                 status = instance_phase
         else:
-            # No instance - VM is stopped or should be starting
-            if run_strategy:
-                # Using runStrategy (newer API)
-                if run_strategy == 'Halted':
-                    status = 'Stopped'
-                elif run_strategy in ['Always', 'RerunOnFailure']:
-                    status = 'Pending'
-                else:
-                    status = 'Stopped'
-            elif running is not None:
-                # Using deprecated running field
-                if running:
-                    status = 'Pending'
-                else:
-                    status = 'Stopped'
+            # No instance - check if VM is actually trying to start or just configured to run
+            if run_strategy == 'Halted' or running == False:
+                # Explicitly stopped
+                status = 'Stopped'
+            elif (run_strategy in ['Always', 'RerunOnFailure'] or running == True) and vm_created == False:
+                # Configured to run but VMI hasn't been created yet = Pending (starting)
+                status = 'Pending'
+            elif run_strategy in ['Always', 'RerunOnFailure'] or running == True:
+                # Configured to run but VMI was created and is now gone = check if it failed or stopped
+                # If VM is not ready and no instance, it's likely stopped/failed
+                status = 'Stopped'
             else:
+                # Default to stopped
                 status = 'Stopped'
 
         # Get VM spec from VM object or instance
