@@ -143,13 +143,23 @@ def fetch_vms() -> list[dict[str, str]]:
                     dv_spec['name'] = dv_name
                     volumes.append(dv_spec)
 
+        # Get OS from instance annotations if available, otherwise from VM annotations
+        os = 'Unknown'
+        if instance:
+            os = instance['metadata'].get('annotations', {}).get('vm.kubevirt.io/os', 'Unknown')
+        if os == 'Unknown':
+            os = vm['metadata'].get('annotations', {}).get('vm.kubevirt.io/os', 'Unknown')
+        # Also try the template annotations
+        if os == 'Unknown':
+            os = vm['spec'].get('template', {}).get('metadata', {}).get('annotations', {}).get('vm.kubevirt.io/os', 'Unknown')
+
         result.append({
             "name": vm_name,
             "namespace": vm_namespace,
             "cpu": spec.get('domain', {}).get('cpu', {}).get('cores', 0),
             "memory": spec.get('domain', {}).get('memory', {}).get('guest', '0Mi'),
             "created_at": vm['metadata']['creationTimestamp'],
-            "os": vm['metadata'].get('annotations', {}).get('vm.kubevirt.io/os', 'Unknown'),
+            "os": os,
             "disks": spec.get('domain', {}).get('devices', {}).get('disks', []),
             "data_volumes": volumes,
             "interfaces": spec.get('domain', {}).get('devices', {}).get('interfaces', []),
