@@ -29,6 +29,7 @@ export default function Home() {
   const [summary, setSummary] = useState({
     totalVMs: 0,
     runningVMs: 0,
+    stoppedVMs: 0,
     totalHosts: 0,
     totalCPU: 0,
     totalMemory: '0',
@@ -58,9 +59,14 @@ export default function Home() {
         return sum;
       }, 0);
 
+      // Count running and stopped VMs based on status
+      const runningVMs = fetchedVms.filter(vm => vm.status === 'Running').length;
+      const stoppedVMs = fetchedVms.filter(vm => vm.status === 'Stopped').length;
+
       setSummary({
         totalVMs: fetchedVms.length,
-        runningVMs: fetchedVms.length,
+        runningVMs,
+        stoppedVMs,
         totalHosts: fetchedHosts.length,
         totalCPU,
         totalMemory: `${totalMemory.toFixed(2)} GB`,
@@ -139,7 +145,7 @@ export default function Home() {
             icon={CubeIcon}
             title="Virtual Machines"
             value={summary.totalVMs}
-            subtitle={`${summary.runningVMs} running`}
+            subtitle={`${summary.runningVMs} running, ${summary.stoppedVMs} stopped`}
             color="#06c"
             linkTo="/vms"
           />
