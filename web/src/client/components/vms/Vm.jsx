@@ -126,7 +126,7 @@ export default function Vm() {
     }
   };
 
-  const cols = ['Name', 'Status', 'OS', 'CPUs', 'Memory', 'Storage', 'Network', 'Actions'];
+  const cols = ['Name', 'Status', 'OS', 'CPUs', 'Memory', 'Storage', 'Network', 'Node', 'Actions'];
   const rows = (item) => {
     const isOperating = operatingVm === item.name;
     const statusColor = item.status === 'Running' ? 'green' : item.status === 'Stopped' ? 'grey' : 'orange';
@@ -140,11 +140,6 @@ export default function Vm() {
     const canStop = !isOperating && runningStates.includes(item.status) && !stoppingStates.includes(item.status);
     const canRestart = !isOperating && item.status === 'Running';
 
-    // Debug logging
-    if (isOperating) {
-      console.log(`VM ${item.name}: status=${item.status}, canStart=${canStart}, isOperating=${isOperating}`);
-    }
-
     return [
       <Link to={`/vms/${item.namespace}/${item.name}`} key={`link-${item.name}`} style={{ color: '#06c', textDecoration: 'none' }}>
         {item.name}
@@ -157,6 +152,7 @@ export default function Vm() {
       item.memory,
       item.dataVolumes,
       item.interfaces,
+      item.node,
       <Flex spaceItems={{ default: 'spaceItemsXs' }} key={`actions-${item.name}`}>
         <FlexItem>
           <Button

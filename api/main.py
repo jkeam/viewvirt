@@ -165,6 +165,11 @@ def fetch_vms() -> list[dict[str, str]]:
                 "mac": iface.get('mac', 'N/A')
             }, interfaces_status))
 
+        # Get the node the VM is running on (only available when instance exists)
+        node_name = None
+        if instance:
+            node_name = instance.get('status', {}).get('nodeName', None)
+
         result.append({
             "name": vm_name,
             "namespace": vm_namespace,
@@ -179,6 +184,7 @@ def fetch_vms() -> list[dict[str, str]]:
             "machine_type": spec.get('domain', {}).get('machine', {}).get('type', 'Unknown'),
             "running": status not in ['Stopped', 'Halted'],
             "status": status,
+            "node": node_name,
         })
 
     return result
@@ -191,6 +197,8 @@ def fetch_hosts() -> list[dict[str, str]]:
         "name": host.metadata.name,
         "cpu": float(host.status.allocatable['cpu'].rstrip("m")) / 1000,
         "memory": host.status.allocatable['memory'],
+        "total_cpu_capacity": host.status.capacity['cpu'],
+        "total_memory_capacity": host.status.capacity['memory'],
         "host_ip": list(filter(lambda address: (address.type == 'InternalIP'), host.status.addresses))[0].address
     }, hosts.items))
 

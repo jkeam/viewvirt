@@ -21,7 +21,8 @@ export const transformVms = (fetched) => {
       // Keep raw data for detail view
       rawDataVolumes: item.data_volumes || [],
       rawInterfaces: item.interfaces || [],
-      networkStatus: item.network_status || []
+      networkStatus: item.network_status || [],
+      node: item.node
     };
   };
   return fetched.map(transform);
@@ -34,17 +35,23 @@ export const transformHosts = (fetched) => {
 
   const transform = (item) => {
     // Convert memory from Ki to Gi for readability
-    let memoryDisplay = item.memory;
-    if (item.memory && item.memory.includes('Ki')) {
-      const memoryKi = parseInt(item.memory.replace('Ki', ''));
-      const memoryGi = (memoryKi / (1024 * 1024)).toFixed(2);
-      memoryDisplay = `${memoryGi} Gi`;
-    }
+    const formatMemory = (memory) => {
+      if (memory && memory.includes('Ki')) {
+        const memoryKi = parseInt(memory.replace('Ki', ''));
+        const memoryGi = (memoryKi / (1024 * 1024)).toFixed(2);
+        return `${memoryGi} Gi`;
+      }
+      return memory;
+    };
 
+    let memoryDisplay = formatMemory(item.memory);
+    let totalMemoryDisplay = formatMemory(item.total_memory_capacity);
     return {
       name: item.name,
       cpu: item.cpu,
       memory: memoryDisplay,
+      totalCpuCapacity: item.total_cpu_capacity,
+      totalMemoryCapacity: totalMemoryDisplay,
       hostIp: item.host_ip
     };
   };

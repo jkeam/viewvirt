@@ -33,6 +33,7 @@ export default function Home() {
     runningVMs: 0,
     stoppedVMs: 0,
     totalHosts: 0,
+    hostsUsedByVMs: 0,
     totalCPU: 0,
     usedCPU: 0,
     totalMemory: '0',
@@ -95,11 +96,19 @@ export default function Home() {
         return sum;
       }, 0);
 
+      // Calculate unique hosts used by VMs
+      const hostsUsedByVMs = new Set(
+        fetchedVms
+          .filter(vm => vm.node) // Only count VMs that have a node assigned
+          .map(vm => vm.node)
+      ).size;
+
       setSummary({
         totalVMs: fetchedVms.length,
         runningVMs,
         stoppedVMs,
         totalHosts: fetchedHosts.length,
+        hostsUsedByVMs,
         totalCPU,
         usedCPU,
         totalMemory: `${totalMemory.toFixed(0)} GB`,
@@ -206,6 +215,16 @@ export default function Home() {
         </GridItem>
         <GridItem lg={3} md={6} sm={12}>
           <SummaryCard
+            icon={ServerIcon}
+            title="Memory"
+            value={`${summary.freeMemory} free`}
+            subtitle={`${summary.totalMemory} total, ${summary.usedMemory} used by VMs`}
+            color="#f0ab00"
+            linkTo="/hosts"
+          />
+        </GridItem>
+        <GridItem lg={3} md={6} sm={12}>
+          <SummaryCard
             icon={DatabaseIcon}
             title="Storage"
             value={`${summary.totalStorage} devices`}
@@ -217,19 +236,9 @@ export default function Home() {
         <GridItem lg={3} md={6} sm={12}>
           <SummaryCard
             icon={ServerIcon}
-            title="Memory"
-            value={`${summary.freeMemory} free`}
-            subtitle={`${summary.totalMemory} total, ${summary.usedMemory} used by VMs`}
-            color="#f0ab00"
-            linkTo="/hosts"
-          />
-        </GridItem>
-        <GridItem lg={3} md={6} sm={12}>
-          <SummaryCard
-            icon={ServerIcon}
             title="Hosts"
             value={summary.totalHosts}
-            subtitle={`${summary.totalCPU} total CPUs`}
+            subtitle={`${summary.hostsUsedByVMs} used by VMs`}
             color="#3e8635"
             linkTo="/hosts"
           />
