@@ -6,11 +6,11 @@ export default function VmAdvanced({ formData, onChange }) {
       <FormGroup label="Run Strategy" helperText="Determines VM lifecycle behavior">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <Radio
-            label="Manual - Controlled by start/stop actions"
+            label="RerunOnFailure - Restart on crash"
             name="runStrategy"
-            id="manual"
-            isChecked={formData.runStrategy === 'Manual'}
-            onChange={() => onChange({ ...formData, runStrategy: 'Manual' })}
+            id="rerunOnFailure"
+            isChecked={formData.runStrategy === 'RerunOnFailure'}
+            onChange={() => onChange({ ...formData, runStrategy: 'RerunOnFailure' })}
           />
           <Radio
             label="Always - Auto-start and keep running"
@@ -18,6 +18,13 @@ export default function VmAdvanced({ formData, onChange }) {
             id="always"
             isChecked={formData.runStrategy === 'Always'}
             onChange={() => onChange({ ...formData, runStrategy: 'Always' })}
+          />
+          <Radio
+            label="Manual - Controlled by start/stop actions"
+            name="runStrategy"
+            id="manual"
+            isChecked={formData.runStrategy === 'Manual'}
+            onChange={() => onChange({ ...formData, runStrategy: 'Manual' })}
           />
           <Radio
             label="Halted - Created in stopped state"

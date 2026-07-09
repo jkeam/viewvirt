@@ -76,5 +76,5 @@ export const vmCreateFormAtom = atom({
   }],
   networks: [{name: 'default', type: 'pod', model: 'virtio'}],
   cloudInit: '',
-  runStrategy: 'Manual'
+  runStrategy: 'RerunOnFailure'
 });
