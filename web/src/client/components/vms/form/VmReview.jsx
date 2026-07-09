@@ -119,7 +119,7 @@ export default function VmReview({ formData }) {
           <CardTitle>Cloud-Init</CardTitle>
           <CardBody>
             <Label color="green">Enabled</Label>
-            <pre style={{ marginTop: '8px', fontSize: '12px', background: '#f5f5f5', padding: '8px', borderRadius: '4px', maxHeight: '200px', overflow: 'auto' }}>
+            <pre style={{ marginTop: '8px', fontSize: '12px', background: 'var(--pf-v5-global--BackgroundColor--200)', border: '1px solid var(--pf-v5-global--BorderColor--100)', padding: '8px', borderRadius: '4px', maxHeight: '200px', overflow: 'auto' }}>
               {formData.cloudInit}
             </pre>
           </CardBody>
