@@ -72,6 +72,9 @@ export const transformStorages = (fetched) => {
     let storageClass = '';
     if (item.storage) {
       storage = path(['resources', 'requests', 'storage'], item.storage);
+      if (/^\d+$/.test(storage)) {
+        storage = `${(storage / (1024 ** 3)).toFixed(0)}Gi`;
+      }
       storageClass = path(['storageClassName'], item.storage);
     }
     let source = '';
