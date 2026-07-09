@@ -89,6 +89,7 @@ export const transformStorages = (fetched) => {
 
     return {
       name: item.name,
+      namespace: item.namespace,
       vm,
       source,
       storage,

@@ -17,11 +17,12 @@ export default function Storage() {
     };
   }, []);
 
-  const cols = ['Name', 'VM', 'Source', 'Size', 'Class'];
+  const cols = ['Name', 'VM', 'Namespace', 'Source', 'Size', 'Class'];
   const rows = (item) => {
     return [
       item.name,
       item.vm,
+      item.namespace,
       item.source,
       item.storage,
       item.storageClass,
