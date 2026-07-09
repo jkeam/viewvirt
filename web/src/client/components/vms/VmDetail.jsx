@@ -415,20 +415,20 @@ export default function VmDetail() {
                   {vm.status === 'Running' ? (
                     <div>
                       <Title headingLevel="h3" size="lg">VNC Console</Title>
-                      <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
+                      <div style={{ marginTop: '16px', padding: '16px', backgroundColor: 'var(--pf-v6-global--BackgroundColor--200)', borderRadius: '4px' }}>
                         <p style={{ marginBottom: '16px' }}>
                           To access the VNC console, use the <code>virtctl</code> command:
                         </p>
                         <pre style={{
-                          backgroundColor: '#282c34',
-                          color: '#abb2bf',
+                          backgroundColor: 'var(--pf-v6-global--BackgroundColor--300)',
+                          color: 'var(--pf-v6-global--Color--100)',
                           padding: '16px',
                           borderRadius: '4px',
                           overflow: 'auto'
                         }}>
                           virtctl vnc {vm.name} -n {vm.namespace}
                         </pre>
-                        <p style={{ marginTop: '16px', fontSize: '0.875rem', color: '#6a6e73' }}>
+                        <p style={{ marginTop: '16px', fontSize: '0.875rem', color: 'var(--pf-v6-global--Color--200)' }}>
                           Note: You need to have <code>virtctl</code> installed locally and kubectl access to the cluster.
                         </p>
                       </div>
@@ -436,7 +436,7 @@ export default function VmDetail() {
                   ) : (
                     <div>
                       <Title headingLevel="h3" size="lg">Console Not Available</Title>
-                      <p style={{ marginTop: '16px', color: '#6a6e73' }}>
+                      <p style={{ marginTop: '16px', color: 'var(--pf-v6-global--Color--200)' }}>
                         The VNC console is only available when the VM is running. Current status: <strong>{vm.status}</strong>
                       </p>
                     </div>
