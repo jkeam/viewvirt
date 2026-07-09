@@ -19,12 +19,16 @@ import {
   Toolbar,
   ToolbarContent,
   ToolbarItem,
+  Dropdown,
+  DropdownList,
+  DropdownItem,
 } from '@patternfly/react-core';
 import {
   PlayIcon,
   StopIcon,
   RedoIcon,
   PlusIcon,
+  EllipsisVIcon,
 } from '@patternfly/react-icons';
 import BasicTable from '../common/BasicTable';
 import { getVms, vmsAtom, getVmnamespaces, vmnamespacesAtom } from '../../utils/store.js';
@@ -41,6 +45,7 @@ export default function Vm() {
   const [selectedNamespace, setSelectedNamespace] = useState(urlNamespace || 'All Namespaces');
   const [alert, setAlert] = useState(location.state?.alert || null);
   const [operatingVm, setOperatingVm] = useState(null);
+  const [openKebabs, setOpenKebabs] = useState({});
   useEffect(() => {
     const fetchData = async () => {
       const fetched = await getVms();
@@ -131,6 +136,13 @@ export default function Vm() {
     }
   };
 
+  const toggleKebab = (vmName, isOpen) => {
+    setOpenKebabs(prev => ({
+      ...prev,
+      [vmName]: isOpen
+    }));
+  };
+
   const cols = ['Name', 'Status', 'OS', 'CPUs', 'Memory', 'Storage', 'Network', 'Node', 'Actions'];
   const rows = (item) => {
     const isOperating = operatingVm === item.name;
@@ -145,6 +157,9 @@ export default function Vm() {
     const canStop = !isOperating && runningStates.includes(item.status) && !stoppingStates.includes(item.status);
     const canRestart = !isOperating && item.status === 'Running';
 
+    const kebabId = `kebab-${item.namespace}-${item.name}`;
+    const isKebabOpen = openKebabs[kebabId] || false;
+
     return [
       <Link to={`/vms/${item.namespace}/${item.name}`} key={`link-${item.name}`} style={{ color: '#06c', textDecoration: 'none' }}>
         {item.name}
@@ -158,41 +173,57 @@ export default function Vm() {
       item.dataVolumes,
       item.interfaces,
       item.node,
-      <Flex spaceItems={{ default: 'spaceItemsXs' }} key={`actions-${item.name}`}>
-        <FlexItem>
-          <Button
-            variant={ButtonVariant.primary}
+      <Dropdown
+        key={`actions-${item.name}`}
+        isOpen={isKebabOpen}
+        onOpenChange={(isOpen) => toggleKebab(kebabId, isOpen)}
+        toggle={(toggleRef) => (
+          <MenuToggle
+            ref={toggleRef}
+            variant="plain"
+            onClick={() => toggleKebab(kebabId, !isKebabOpen)}
+            isExpanded={isKebabOpen}
+          >
+            <EllipsisVIcon />
+          </MenuToggle>
+        )}
+      >
+        <DropdownList>
+          <DropdownItem
+            key="start"
             icon={<PlayIcon />}
-            onClick={() => handleVmAction('start', item.namespace, item.name)}
+            onClick={() => {
+              toggleKebab(kebabId, false);
+              handleVmAction('start', item.namespace, item.name);
+            }}
             isDisabled={!canStart}
-            size="sm"
           >
             Start
-          </Button>
-        </FlexItem>
-        <FlexItem>
-          <Button
-            variant={ButtonVariant.danger}
+          </DropdownItem>
+          <DropdownItem
+            key="stop"
             icon={<StopIcon />}
-            onClick={() => handleVmAction('stop', item.namespace, item.name)}
+            onClick={() => {
+              toggleKebab(kebabId, false);
+              handleVmAction('stop', item.namespace, item.name);
+            }}
             isDisabled={!canStop}
-            size="sm"
           >
             Stop
-          </Button>
-        </FlexItem>
-        <FlexItem>
-          <Button
-            variant={ButtonVariant.secondary}
+          </DropdownItem>
+          <DropdownItem
+            key="restart"
             icon={<RedoIcon />}
-            onClick={() => handleVmAction('restart', item.namespace, item.name)}
+            onClick={() => {
+              toggleKebab(kebabId, false);
+              handleVmAction('restart', item.namespace, item.name);
+            }}
             isDisabled={!canRestart}
-            size="sm"
           >
             Restart
-          </Button>
-        </FlexItem>
-      </Flex>,
+          </DropdownItem>
+        </DropdownList>
+      </Dropdown>,
     ];
   };
 
