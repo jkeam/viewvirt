@@ -144,6 +144,13 @@ export default function VmCreate() {
         </WizardStep>
 
         <WizardStep
+          name="Advanced"
+          id="advanced"
+        >
+          <VmAdvanced formData={formData} onChange={setFormData} />
+        </WizardStep>
+
+        <WizardStep
           name="Review"
           id="review"
         >
