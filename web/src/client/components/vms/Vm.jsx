@@ -252,32 +252,32 @@ export default function Vm() {
           actionClose={<Button variant="plain" onClick={() => setAlert(null)}>×</Button>}
         />
       )}
-      <Toolbar style={{ marginBottom: '16px' }}>
-        <ToolbarContent>
-          <ToolbarItem>
-            <Button variant={ButtonVariant.primary} icon={<PlusIcon />} onClick={() => navigate('/vms/create')}>
-              Create VM
-            </Button>
-          </ToolbarItem>
-        </ToolbarContent>
-      </Toolbar>
       <Panel>
         <PanelMain>
           <PanelMainBody>
-            Namespace: &nbsp;
-            <Select
-              isOpen={isNamespaceSelectOpen}
-              onOpenChange={isOpen => setNamespaceSelectIsOpen(isOpen)}
-              toggle={toggle}
-              onSelect={onSelect}
-              selected={selectedNamespace}
-              shouldFocusToggleOnSelect
-            >
-              <SelectList>
-                <SelectOption value="All Namespaces" key="all-namespaces">All Namespaces</SelectOption>
-                {vmnamespaces.map(v => <SelectOption value={v} key={v}>{v}</SelectOption>)}
-              </SelectList>
-            </Select>
+            <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
+              <FlexItem>
+                Namespace: &nbsp;
+                <Select
+                  isOpen={isNamespaceSelectOpen}
+                  onOpenChange={isOpen => setNamespaceSelectIsOpen(isOpen)}
+                  toggle={toggle}
+                  onSelect={onSelect}
+                  selected={selectedNamespace}
+                  shouldFocusToggleOnSelect
+                >
+                  <SelectList>
+                    <SelectOption value="All Namespaces" key="all-namespaces">All Namespaces</SelectOption>
+                    {vmnamespaces.map(v => <SelectOption value={v} key={v}>{v}</SelectOption>)}
+                  </SelectList>
+                </Select>
+              </FlexItem>
+              <FlexItem>
+                <Button variant={ButtonVariant.primary} icon={<PlusIcon />} onClick={() => navigate('/vms/create')}>
+                  Create VM
+                </Button>
+              </FlexItem>
+            </Flex>
           </PanelMainBody>
         </PanelMain>
       </Panel>
