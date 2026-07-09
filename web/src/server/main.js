@@ -6,6 +6,7 @@ import 'dotenv/config';
 const API_BASE_URL = process.env.API_BASE_URL;
 
 const app = express();
+app.use(express.json());
 
 const baseGet = async (path) => {
   try {
@@ -21,17 +22,22 @@ const baseGet = async (path) => {
   }
 };
 
-const basePost = async (path) => {
+const basePost = async (path, body = null) => {
   try {
     const url = `${API_BASE_URL}${path}`;
     const options = {
       method: 'POST'
     };
+    if (body) {
+      options.headers = { 'Content-Type': 'application/json' };
+      options.body = JSON.stringify(body);
+    }
     const callResponse = await fetch(url, options);
     const json = await callResponse.json();
     return json;
   } catch (err) {
     console.error(err);
+    throw err;
   }
 };
 
@@ -57,6 +63,17 @@ app.get("/api/storages", async (req, res) => {
 app.get("/api/vmnamespaces", async (req, res) => {
   const json = await baseGet("/vmnamespaces");
   res.json(json);
+});
+
+app.post("/api/vms", async (req, res) => {
+  try {
+    const vmSpec = req.body;
+    const json = await basePost("/vms", vmSpec);
+    res.json(json);
+  } catch (err) {
+    console.error('Error creating VM:', err);
+    res.status(500).json({ status: 'error', message: err.message || 'Failed to create VM' });
+  }
 });
 
 app.post("/api/vms/:namespace/:name/start", async (req, res) => {

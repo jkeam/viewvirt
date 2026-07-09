@@ -50,6 +50,17 @@ export const createVm = async(vmSpec) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(vmSpec),
     });
+
+    if (!response.ok) {
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        return { status: 'error', message: errorData.message || `HTTP ${response.status}: ${response.statusText}` };
+      } else {
+        return { status: 'error', message: `HTTP ${response.status}: ${response.statusText}` };
+      }
+    }
+
     return await response.json();
   } catch (error) {
     return { status: 'error', message: error.message };
