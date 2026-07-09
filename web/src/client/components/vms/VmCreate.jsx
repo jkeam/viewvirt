@@ -3,16 +3,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   PageSection,
-  Form,
-  FormSection,
-  Button,
-  ButtonVariant,
   Alert,
   Breadcrumb,
   BreadcrumbItem,
-  Panel,
-  PanelMain,
-  PanelMainBody,
+  Wizard,
+  WizardStep,
 } from '@patternfly/react-core';
 import { vmCreateFormAtom, vmnamespacesAtom, storagesAtom, getVmnamespaces, getStorages } from '../../utils/store.js';
 import { createVm } from '../../utils/api.js';
@@ -22,6 +17,7 @@ import VmStorage from './form/VmStorage.jsx';
 import VmNetwork from './form/VmNetwork.jsx';
 import VmCloudInit from './form/VmCloudInit.jsx';
 import VmAdvanced from './form/VmAdvanced.jsx';
+import VmReview from './form/VmReview.jsx';
 
 export default function VmCreate() {
   const navigate = useNavigate();
@@ -29,7 +25,6 @@ export default function VmCreate() {
   const [namespaces, setNamespaces] = useAtom(vmnamespacesAtom);
   const [dataVolumes, setDataVolumes] = useAtom(storagesAtom);
   const [alert, setAlert] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -42,49 +37,26 @@ export default function VmCreate() {
     fetchData();
   }, []);
 
-  const validateForm = () => {
-    if (!formData.name) return 'VM name is required';
-    if (!formData.namespace) return 'Namespace is required';
-    if (formData.cpu <= 0) return 'CPU cores must be greater than 0';
-    if (!formData.memory) return 'Memory is required';
-    if (!formData.memory.match(/^\d+(Mi|Gi|M|G)$/)) return 'Memory format invalid (e.g., "2Gi", "512Mi")';
-    if (!formData.disks || formData.disks.length === 0) return 'At least one disk is required';
+  const validateStorage = () => {
+    if (!formData.disks || formData.disks.length === 0) return false;
 
-    for (let i = 0; i < formData.disks.length; i++) {
-      const disk = formData.disks[i];
-      if (!disk.name) return `Disk ${i + 1} name is required`;
-      if (disk.source === 'existing' && !disk.dataVolumeName) {
-        return `Disk ${i + 1} requires a DataVolume selection`;
-      }
-      if (disk.source === 'new' && !disk.imageUrl) {
-        return `Disk ${i + 1} requires an image URL`;
-      }
-      if (disk.source === 'new' && !disk.size) {
-        return `Disk ${i + 1} requires a size`;
-      }
+    for (let disk of formData.disks) {
+      if (!disk.name) return false;
+      if (disk.source === 'existing' && !disk.dataVolumeName) return false;
+      if (disk.source === 'new' && (!disk.imageUrl || !disk.size)) return false;
     }
 
-    return null;
+    return true;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setAlert(null);
-
-    const validationError = validateForm();
-    if (validationError) {
-      setAlert({ type: 'danger', message: validationError });
-      return;
-    }
-
-    setIsSubmitting(true);
 
     try {
       const result = await createVm(formData);
 
       if (result.status === 'error') {
         setAlert({ type: 'danger', message: `Failed to create VM: ${result.message}` });
-        setIsSubmitting(false);
       } else {
         navigate('/vms', {
           state: { alert: { type: 'success', message: `VM "${formData.name}" created successfully` } }
@@ -92,7 +64,6 @@ export default function VmCreate() {
       }
     } catch (error) {
       setAlert({ type: 'danger', message: `Error: ${error.message}` });
-      setIsSubmitting(false);
     }
   };
 
@@ -111,58 +82,74 @@ export default function VmCreate() {
           title={alert.message}
           isInline
           style={{ marginBottom: '16px' }}
-          actionClose={<Button variant="plain" onClick={() => setAlert(null)}>×</Button>}
+          actionClose={<button onClick={() => setAlert(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>×</button>}
         />
       )}
 
-      <Panel>
-        <PanelMain>
-          <PanelMainBody>
-            <Form onSubmit={handleSubmit}>
-              <FormSection title="Basic Information" titleElement="h2">
-                <VmBasicInfo
-                  formData={formData}
-                  onChange={setFormData}
-                  namespaces={namespaces}
-                />
-              </FormSection>
+      <Wizard
+        height={700}
+        onSave={handleSubmit}
+        onClose={() => navigate('/vms')}
+      >
+        <WizardStep
+          name="Basic Setup"
+          id="basic-setup"
+          footer={{
+            isNextDisabled: !formData.name || !formData.namespace
+          }}
+        >
+          <VmBasicInfo
+            formData={formData}
+            onChange={setFormData}
+            namespaces={namespaces}
+          />
+        </WizardStep>
 
-              <FormSection title="Hardware Configuration" titleElement="h2">
-                <VmHardware formData={formData} onChange={setFormData} />
-              </FormSection>
+        <WizardStep
+          name="Hardware"
+          id="hardware"
+          footer={{
+            isNextDisabled: !formData.cpu || formData.cpu <= 0 || !formData.memory || !formData.memory.match(/^\d+(Mi|Gi|M|G)$/)
+          }}
+        >
+          <VmHardware formData={formData} onChange={setFormData} />
+        </WizardStep>
 
-              <FormSection title="Storage" titleElement="h2">
-                <VmStorage
-                  formData={formData}
-                  onChange={setFormData}
-                  dataVolumes={dataVolumes}
-                />
-              </FormSection>
+        <WizardStep
+          name="Storage"
+          id="storage"
+          footer={{
+            isNextDisabled: !validateStorage()
+          }}
+        >
+          <VmStorage
+            formData={formData}
+            onChange={setFormData}
+            dataVolumes={dataVolumes}
+          />
+        </WizardStep>
 
-              <FormSection title="Network" titleElement="h2">
-                <VmNetwork formData={formData} onChange={setFormData} />
-              </FormSection>
+        <WizardStep
+          name="Network"
+          id="network"
+        >
+          <VmNetwork formData={formData} onChange={setFormData} />
+        </WizardStep>
 
-              <FormSection title="Cloud-Init" titleElement="h2">
-                <VmCloudInit formData={formData} onChange={setFormData} />
-              </FormSection>
+        <WizardStep
+          name="Cloud-Init"
+          id="cloud-init"
+        >
+          <VmCloudInit formData={formData} onChange={setFormData} />
+        </WizardStep>
 
-              <FormSection title="Advanced Settings" titleElement="h2">
-                <VmAdvanced formData={formData} onChange={setFormData} />
-              </FormSection>
-
-              <div style={{ marginTop: '24px', display: 'flex', gap: '16px' }}>
-                <Button variant={ButtonVariant.primary} type="submit" isDisabled={isSubmitting}>
-                  {isSubmitting ? 'Creating...' : 'Create VM'}
-                </Button>
-                <Button variant={ButtonVariant.link} onClick={() => navigate('/vms')}>
-                  Cancel
-                </Button>
-              </div>
-            </Form>
-          </PanelMainBody>
-        </PanelMain>
-      </Panel>
+        <WizardStep
+          name="Review"
+          id="review"
+        >
+          <VmReview formData={formData} />
+        </WizardStep>
+      </Wizard>
     </PageSection>
   );
 }

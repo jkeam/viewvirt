@@ -11,7 +11,7 @@ export default function VmBasicInfo({ formData, onChange, namespaces }) {
   );
 
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <FormGroup label="Name" isRequired>
         <TextInput
           isRequired
@@ -49,6 +49,6 @@ export default function VmBasicInfo({ formData, onChange, namespaces }) {
           placeholder="fedora40"
         />
       </FormGroup>
-    </>
+    </div>
   );
 }
