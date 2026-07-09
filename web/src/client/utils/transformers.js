@@ -1,10 +1,25 @@
 import { path } from 'ramda';
 
+// Helper functions
+const formatStorage = (storage) => {
+  if (storage && /^\d+$/.test(storage)) {
+    return `${(storage / (1024 ** 3)).toFixed(0)}Gi`;
+  }
+  return storage;
+}
+
 export const transformVms = (fetched) => {
   if (!fetched) {
     return [];
   }
   const transform = (item) => {
+    const dataVolumes = (item.data_volumes || []).map(i => {
+      return {
+        name: i.name,
+        storage: formatStorage(i['storage']['resources']['requests']['storage'])
+      }
+    });
+    const dataVolumeString = dataVolumes.map(d => `${d.name} (${d.storage})`).join(', ')
     return {
       name: item.name,
       namespace: item.namespace,
@@ -16,7 +31,7 @@ export const transformVms = (fetched) => {
       disks: item.disks || [],
       running: item.running,
       status: item.status,
-      dataVolumes: (item.data_volumes || []).map(i => `${i.name} (${i['storage']['resources']['requests']['storage']})`).join(', '),
+      dataVolumes: dataVolumeString,
       interfaces: (item.interfaces || []).map(i => `${i.name} (${i.model})`).join(', '),
       // Keep raw data for detail view
       rawDataVolumes: item.data_volumes || [],
@@ -71,10 +86,7 @@ export const transformStorages = (fetched) => {
     let storage = '';
     let storageClass = '';
     if (item.storage) {
-      storage = path(['resources', 'requests', 'storage'], item.storage);
-      if (/^\d+$/.test(storage)) {
-        storage = `${(storage / (1024 ** 3)).toFixed(0)}Gi`;
-      }
+      storage = formatStorage(path(['resources', 'requests', 'storage'], item.storage));
       storageClass = path(['storageClassName'], item.storage);
     }
     let source = '';

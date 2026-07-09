@@ -7,3 +7,8 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
+
+/* Make required field asterisks red */
+.pf-v6-c-form__label-required {
+  color: var(--pf-t--global--color--status--danger--default);
+}

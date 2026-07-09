@@ -6,6 +6,7 @@ import 'dotenv/config';
 const API_BASE_URL = process.env.API_BASE_URL;
 
 const app = express();
+app.use(express.json());
 
 const baseGet = async (path) => {
   try {
@@ -21,17 +22,37 @@ const baseGet = async (path) => {
   }
 };
 
-const basePost = async (path) => {
+const basePost = async (path, body = null) => {
   try {
     const url = `${API_BASE_URL}${path}`;
     const options = {
       method: 'POST'
+    };
+    if (body) {
+      options.headers = { 'Content-Type': 'application/json' };
+      options.body = JSON.stringify(body);
+    }
+    const callResponse = await fetch(url, options);
+    const json = await callResponse.json();
+    return json;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
+
+const baseDelete = async (path) => {
+  try {
+    const url = `${API_BASE_URL}${path}`;
+    const options = {
+      method: 'DELETE'
     };
     const callResponse = await fetch(url, options);
     const json = await callResponse.json();
     return json;
   } catch (err) {
     console.error(err);
+    throw err;
   }
 };
 
@@ -59,6 +80,22 @@ app.get("/api/vmnamespaces", async (req, res) => {
   res.json(json);
 });
 
+app.get("/api/datasources", async (req, res) => {
+  const json = await baseGet("/datasources");
+  res.json(json);
+});
+
+app.post("/api/vms", async (req, res) => {
+  try {
+    const vmSpec = req.body;
+    const json = await basePost("/vms", vmSpec);
+    res.json(json);
+  } catch (err) {
+    console.error('Error creating VM:', err);
+    res.status(500).json({ status: 'error', message: err.message || 'Failed to create VM' });
+  }
+});
+
 app.post("/api/vms/:namespace/:name/start", async (req, res) => {
   const { namespace, name } = req.params;
   const json = await basePost(`/vms/${namespace}/${name}/start`);
@@ -74,6 +111,12 @@ app.post("/api/vms/:namespace/:name/stop", async (req, res) => {
 app.post("/api/vms/:namespace/:name/restart", async (req, res) => {
   const { namespace, name } = req.params;
   const json = await basePost(`/vms/${namespace}/${name}/restart`);
+  res.json(json);
+});
+
+app.delete("/api/vms/:namespace/:name", async (req, res) => {
+  const { namespace, name } = req.params;
+  const json = await baseDelete(`/vms/${namespace}/${name}`);
   res.json(json);
 });
 

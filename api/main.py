@@ -214,6 +214,20 @@ def fetch_storages() -> list[dict[str, str]]:
         "storage": dv['spec'].get('storage'),
     }, data_volumes['items']))
 
+def fetch_datasources() -> list[dict[str, str]]:
+    logger.info("fetch_datasources")
+    api = client.CustomObjectsApi()
+    try:
+        data_sources = api.list_cluster_custom_object(group="cdi.kubevirt.io", version="v1beta1", plural="datasources")
+        return list(map(lambda ds: {
+            "name": ds['metadata']['name'],
+            "namespace": ds['metadata']['namespace'],
+            "source": ds['spec'].get('source'),
+        }, data_sources['items']))
+    except Exception as e:
+        logger.error(f"Error fetching datasources: {e}")
+        return []
+
 @app.get("/")
 def get_root():
     return {"message": "welcome to the best api"}
@@ -241,6 +255,10 @@ def get_hosts():
 @app.get("/storages")
 def get_storages():
     return {"storages": fetch_storages()}
+
+@app.get("/datasources")
+def get_datasources():
+    return {"datasources": fetch_datasources()}
 
 @app.post("/vms/{namespace}/{name}/start")
 def start_vm(namespace: str, name: str):
@@ -331,4 +349,224 @@ def get_vnc_info(namespace: str, name: str):
         }
     except Exception as e:
         logger.error(f"Error getting VNC info: {e}")
+        return {"status": "error", "message": str(e)}
+
+@app.delete("/vms/{namespace}/{name}")
+def delete_vm(namespace: str, name: str):
+    logger.info(f"delete_vm: {namespace}/{name}")
+    api = client.CustomObjectsApi()
+    try:
+        # Delete the VirtualMachine resource
+        api.delete_namespaced_custom_object(
+            group="kubevirt.io",
+            version="v1",
+            namespace=namespace,
+            plural="virtualmachines",
+            name=name
+        )
+        return {"status": "deleted", "namespace": namespace, "name": name}
+    except Exception as e:
+        logger.error(f"Error deleting VM: {e}")
+        return {"status": "error", "message": str(e)}
+
+@app.post("/vms")
+def create_vm(vm_data: dict):
+    logger.info(f"create_vm: {vm_data.get('name')} in namespace {vm_data.get('namespace')}")
+    api = client.CustomObjectsApi()
+
+    try:
+        # Validate required fields
+        if not vm_data.get('name'):
+            return {"status": "error", "message": "VM name is required"}
+        if not vm_data.get('namespace'):
+            return {"status": "error", "message": "Namespace is required"}
+        if not vm_data.get('cpu') or vm_data['cpu'] <= 0:
+            return {"status": "error", "message": "CPU cores must be greater than 0"}
+        if not vm_data.get('memory'):
+            return {"status": "error", "message": "Memory is required"}
+        if not vm_data.get('disks') or len(vm_data['disks']) == 0:
+            return {"status": "error", "message": "At least one disk is required"}
+
+        # Build KubeVirt VirtualMachine spec
+        vm_spec = {
+            "apiVersion": "kubevirt.io/v1",
+            "kind": "VirtualMachine",
+            "metadata": {
+                "name": vm_data['name'],
+                "namespace": vm_data['namespace'],
+                "labels": {
+                    "kubevirt.io/vm": vm_data['name']
+                }
+            },
+            "spec": {
+                "runStrategy": vm_data.get('runStrategy', 'Manual'),
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "kubevirt.io/vm": vm_data['name']
+                        }
+                    },
+                    "spec": {
+                        "domain": {
+                            "cpu": {
+                                "cores": vm_data['cpu']
+                            },
+                            "memory": {
+                                "guest": vm_data['memory']
+                            },
+                            "devices": {
+                                "disks": [],
+                                "interfaces": []
+                            }
+                        },
+                        "volumes": [],
+                        "networks": []
+                    }
+                }
+            }
+        }
+
+        # Add OS annotation if provided
+        if vm_data.get('os'):
+            vm_spec['metadata']['annotations'] = {"vm.kubevirt.io/os": vm_data['os']}
+
+        # Build disks and volumes
+        data_volume_templates = []
+        for idx, disk in enumerate(vm_data['disks']):
+            disk_name = disk.get('name', f"disk{idx}")
+
+            # Add disk to devices
+            disk_device = {
+                "name": disk_name,
+                "disk": {"bus": "virtio"}
+            }
+            if disk.get('bootOrder'):
+                disk_device['bootOrder'] = disk['bootOrder']
+            vm_spec['spec']['template']['spec']['domain']['devices']['disks'].append(disk_device)
+
+            # Add volume based on source type
+            if disk.get('source') == 'existing':
+                # Reference existing DataVolume
+                vm_spec['spec']['template']['spec']['volumes'].append({
+                    "name": disk_name,
+                    "dataVolume": {
+                        "name": disk.get('dataVolumeName')
+                    }
+                })
+            elif disk.get('source') == 'new':
+                # Create DataVolume template from container image
+                dv_name = f"{vm_data['name']}-{disk_name}"
+                data_volume_templates.append({
+                    "metadata": {
+                        "name": dv_name
+                    },
+                    "spec": {
+                        "source": {
+                            "registry": {
+                                "url": f"docker://{disk.get('imageUrl')}"
+                            }
+                        },
+                        "storage": {
+                            "accessModes": ["ReadWriteOnce"],
+                            "resources": {
+                                "requests": {
+                                    "storage": disk.get('size', '10Gi')
+                                }
+                            }
+                        }
+                    }
+                })
+                vm_spec['spec']['template']['spec']['volumes'].append({
+                    "name": disk_name,
+                    "dataVolume": {
+                        "name": dv_name
+                    }
+                })
+            elif disk.get('source') == 'clone':
+                # Clone from DataSource (e.g., from openshift-virtualization-os-images)
+                dv_name = f"{vm_data['name']}-{disk_name}"
+                data_volume_templates.append({
+                    "metadata": {
+                        "name": dv_name
+                    },
+                    "spec": {
+                        "sourceRef": {
+                            "kind": "DataSource",
+                            "name": disk.get('dataSourceName'),
+                            "namespace": disk.get('dataSourceNamespace', 'openshift-virtualization-os-images')
+                        },
+                        "storage": {
+                            "accessModes": ["ReadWriteOnce"],
+                            "resources": {
+                                "requests": {
+                                    "storage": disk.get('size', '30Gi')
+                                }
+                            }
+                        }
+                    }
+                })
+                vm_spec['spec']['template']['spec']['volumes'].append({
+                    "name": disk_name,
+                    "dataVolume": {
+                        "name": dv_name
+                    }
+                })
+
+        # Add dataVolumeTemplates if any
+        if data_volume_templates:
+            vm_spec['spec']['dataVolumeTemplates'] = data_volume_templates
+
+        # Build networks and interfaces
+        for network in vm_data.get('networks', []):
+            network_name = network.get('name', 'default')
+
+            # Add interface
+            vm_spec['spec']['template']['spec']['domain']['devices']['interfaces'].append({
+                "name": network_name,
+                "model": network.get('model', 'virtio'),
+                "masquerade": {} if network.get('type') == 'pod' else None,
+                "bridge": {} if network.get('type') == 'multus' else None
+            })
+
+            # Add network
+            if network.get('type') == 'pod':
+                vm_spec['spec']['template']['spec']['networks'].append({
+                    "name": network_name,
+                    "pod": {}
+                })
+            elif network.get('type') == 'multus':
+                vm_spec['spec']['template']['spec']['networks'].append({
+                    "name": network_name,
+                    "multus": {
+                        "networkName": network.get('multusNetwork', 'default')
+                    }
+                })
+
+        # Add cloud-init if provided
+        if vm_data.get('cloudInit'):
+            vm_spec['spec']['template']['spec']['volumes'].append({
+                "name": "cloudinitdisk",
+                "cloudInitNoCloud": {
+                    "userData": vm_data['cloudInit']
+                }
+            })
+            vm_spec['spec']['template']['spec']['domain']['devices']['disks'].append({
+                "name": "cloudinitdisk",
+                "disk": {"bus": "virtio"}
+            })
+
+        # Create the VM
+        created_vm = api.create_namespaced_custom_object(
+            group="kubevirt.io",
+            version="v1",
+            namespace=vm_data['namespace'],
+            plural="virtualmachines",
+            body=vm_spec
+        )
+
+        logger.info(f"Successfully created VM: {vm_data['name']} in namespace {vm_data['namespace']}")
+        return {"status": "success", "vm": created_vm}
+
+    except Exception as e:
+        logger.error(f"Error creating VM: {e}")
         return {"status": "error", "message": str(e)}

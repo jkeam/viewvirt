@@ -4,6 +4,7 @@ import {
   fetchHosts,
   fetchStorages,
   fetchVmnamespaces,
+  fetchDatasources,
 } from './api.js';
 import {
   transformVms,
@@ -59,3 +60,30 @@ export const getVmnamespaces = async () => {
   const fetched = await fetchVmnamespaces();
   return transformVmnamespaces(fetched);
 }
+
+export const datasourcesAtom = atom([]);
+export const getDatasources = async () => {
+  const fetched = await fetchDatasources();
+  return fetched;
+}
+
+export const vmCreateFormAtom = atom({
+  name: '',
+  namespace: '',
+  os: '',
+  cpu: 1,
+  memory: '2Gi',
+  disks: [{
+    name: 'disk0',
+    source: 'clone',
+    dataVolumeName: '',
+    dataSourceName: '',
+    dataSourceNamespace: 'openshift-virtualization-os-images',
+    imageUrl: '',
+    size: '30Gi',
+    bootOrder: 1
+  }],
+  networks: [{name: 'default', type: 'pod', model: 'virtio'}],
+  cloudInit: '',
+  runStrategy: 'RerunOnFailure'
+});

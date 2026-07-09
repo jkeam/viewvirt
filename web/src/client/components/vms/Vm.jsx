@@ -1,6 +1,6 @@
 import { useAtom } from 'jotai';
 import { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   PageSection,
   Select,
@@ -16,26 +16,37 @@ import {
   FlexItem,
   Alert,
   Label,
+  Toolbar,
+  ToolbarContent,
+  ToolbarItem,
+  Dropdown,
+  DropdownList,
+  DropdownItem,
 } from '@patternfly/react-core';
 import {
   PlayIcon,
   StopIcon,
   RedoIcon,
+  PlusIcon,
+  EllipsisVIcon,
+  TrashIcon,
 } from '@patternfly/react-icons';
 import BasicTable from '../common/BasicTable';
 import { getVms, vmsAtom, getVmnamespaces, vmnamespacesAtom } from '../../utils/store.js';
-import { startVm, stopVm, restartVm } from '../../utils/api.js';
+import { startVm, stopVm, restartVm, deleteVm } from '../../utils/api.js';
 
 export default function Vm() {
   const { namespace: urlNamespace } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [vms, setVms] = useAtom(vmsAtom);
   const [vmnamespaces, setVmnamespaces] = useAtom(vmnamespacesAtom);
   const [filteredVms, setFilteredVms] = useState([]);
   const [isNamespaceSelectOpen, setNamespaceSelectIsOpen] = useState(false);
   const [selectedNamespace, setSelectedNamespace] = useState(urlNamespace || 'All Namespaces');
-  const [alert, setAlert] = useState(null);
+  const [alert, setAlert] = useState(location.state?.alert || null);
   const [operatingVm, setOperatingVm] = useState(null);
+  const [openKebabs, setOpenKebabs] = useState({});
   useEffect(() => {
     const fetchData = async () => {
       const fetched = await getVms();
@@ -101,6 +112,8 @@ export default function Vm() {
         result = await stopVm(namespace, name);
       } else if (action === 'restart') {
         result = await restartVm(namespace, name);
+      } else if (action === 'delete') {
+        result = await deleteVm(namespace, name);
       }
 
       if (result.status === 'error') {
@@ -126,6 +139,13 @@ export default function Vm() {
     }
   };
 
+  const toggleKebab = (vmName, isOpen) => {
+    setOpenKebabs(prev => ({
+      ...prev,
+      [vmName]: isOpen
+    }));
+  };
+
   const cols = ['Name', 'Status', 'OS', 'CPUs', 'Memory', 'Storage', 'Network', 'Node', 'Actions'];
   const rows = (item) => {
     const isOperating = operatingVm === item.name;
@@ -140,6 +160,9 @@ export default function Vm() {
     const canStop = !isOperating && runningStates.includes(item.status) && !stoppingStates.includes(item.status);
     const canRestart = !isOperating && item.status === 'Running';
 
+    const kebabId = `kebab-${item.namespace}-${item.name}`;
+    const isKebabOpen = openKebabs[kebabId] || false;
+
     return [
       <Link to={`/vms/${item.namespace}/${item.name}`} key={`link-${item.name}`} style={{ color: '#06c', textDecoration: 'none' }}>
         {item.name}
@@ -153,41 +176,68 @@ export default function Vm() {
       item.dataVolumes,
       item.interfaces,
       item.node,
-      <Flex spaceItems={{ default: 'spaceItemsXs' }} key={`actions-${item.name}`}>
-        <FlexItem>
-          <Button
-            variant={ButtonVariant.primary}
+      <Dropdown
+        key={`actions-${item.name}`}
+        isOpen={isKebabOpen}
+        onOpenChange={(isOpen) => toggleKebab(kebabId, isOpen)}
+        toggle={(toggleRef) => (
+          <MenuToggle
+            ref={toggleRef}
+            variant="plain"
+            onClick={() => toggleKebab(kebabId, !isKebabOpen)}
+            isExpanded={isKebabOpen}
+          >
+            <EllipsisVIcon />
+          </MenuToggle>
+        )}
+      >
+        <DropdownList>
+          <DropdownItem
+            key="start"
             icon={<PlayIcon />}
-            onClick={() => handleVmAction('start', item.namespace, item.name)}
+            onClick={() => {
+              toggleKebab(kebabId, false);
+              handleVmAction('start', item.namespace, item.name);
+            }}
             isDisabled={!canStart}
-            size="sm"
           >
             Start
-          </Button>
-        </FlexItem>
-        <FlexItem>
-          <Button
-            variant={ButtonVariant.danger}
+          </DropdownItem>
+          <DropdownItem
+            key="stop"
             icon={<StopIcon />}
-            onClick={() => handleVmAction('stop', item.namespace, item.name)}
+            onClick={() => {
+              toggleKebab(kebabId, false);
+              handleVmAction('stop', item.namespace, item.name);
+            }}
             isDisabled={!canStop}
-            size="sm"
           >
             Stop
-          </Button>
-        </FlexItem>
-        <FlexItem>
-          <Button
-            variant={ButtonVariant.secondary}
+          </DropdownItem>
+          <DropdownItem
+            key="restart"
             icon={<RedoIcon />}
-            onClick={() => handleVmAction('restart', item.namespace, item.name)}
+            onClick={() => {
+              toggleKebab(kebabId, false);
+              handleVmAction('restart', item.namespace, item.name);
+            }}
             isDisabled={!canRestart}
-            size="sm"
           >
             Restart
-          </Button>
-        </FlexItem>
-      </Flex>,
+          </DropdownItem>
+          <DropdownItem
+            key="delete"
+            icon={<TrashIcon />}
+            onClick={() => {
+              toggleKebab(kebabId, false);
+              handleVmAction('delete', item.namespace, item.name);
+            }}
+            isDisabled={isOperating}
+          >
+            Delete
+          </DropdownItem>
+        </DropdownList>
+      </Dropdown>,
     ];
   };
 
@@ -205,20 +255,29 @@ export default function Vm() {
       <Panel>
         <PanelMain>
           <PanelMainBody>
-            Namespace: &nbsp;
-            <Select
-              isOpen={isNamespaceSelectOpen}
-              onOpenChange={isOpen => setNamespaceSelectIsOpen(isOpen)}
-              toggle={toggle}
-              onSelect={onSelect}
-              selected={selectedNamespace}
-              shouldFocusToggleOnSelect
-            >
-              <SelectList>
-                <SelectOption value="All Namespaces" key="all-namespaces">All Namespaces</SelectOption>
-                {vmnamespaces.map(v => <SelectOption value={v} key={v}>{v}</SelectOption>)}
-              </SelectList>
-            </Select>
+            <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
+              <FlexItem>
+                Namespace: &nbsp;
+                <Select
+                  isOpen={isNamespaceSelectOpen}
+                  onOpenChange={isOpen => setNamespaceSelectIsOpen(isOpen)}
+                  toggle={toggle}
+                  onSelect={onSelect}
+                  selected={selectedNamespace}
+                  shouldFocusToggleOnSelect
+                >
+                  <SelectList>
+                    <SelectOption value="All Namespaces" key="all-namespaces">All Namespaces</SelectOption>
+                    {vmnamespaces.map(v => <SelectOption value={v} key={v}>{v}</SelectOption>)}
+                  </SelectList>
+                </Select>
+              </FlexItem>
+              <FlexItem>
+                <Button variant={ButtonVariant.primary} icon={<PlusIcon />} onClick={() => navigate('/vms/create')}>
+                  Create VM
+                </Button>
+              </FlexItem>
+            </Flex>
           </PanelMainBody>
         </PanelMain>
       </Panel>

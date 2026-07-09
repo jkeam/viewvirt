@@ -22,6 +22,12 @@ export const fetchVmnamespaces = async() => {
   return resp['vmnamespaces'];
 }
 
+export const fetchDatasources = async() => {
+  const response = await fetch('/api/datasources');
+  const resp = await response.json();
+  return resp['datasources'];
+}
+
 export const startVm = async(namespace, name) => {
   const response = await fetch(`/api/vms/${namespace}/${name}/start`, {
     method: 'POST',
@@ -41,4 +47,35 @@ export const restartVm = async(namespace, name) => {
     method: 'POST',
   });
   return await response.json();
+}
+
+export const deleteVm = async(namespace, name) => {
+  const response = await fetch(`/api/vms/${namespace}/${name}`, {
+    method: 'DELETE',
+  });
+  return await response.json();
+}
+
+export const createVm = async(vmSpec) => {
+  try {
+    const response = await fetch('/api/vms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(vmSpec),
+    });
+
+    if (!response.ok) {
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        return { status: 'error', message: errorData.message || `HTTP ${response.status}: ${response.statusText}` };
+      } else {
+        return { status: 'error', message: `HTTP ${response.status}: ${response.statusText}` };
+      }
+    }
+
+    return await response.json();
+  } catch (error) {
+    return { status: 'error', message: error.message };
+  }
 }
