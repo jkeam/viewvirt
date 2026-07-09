@@ -49,6 +49,13 @@ export const restartVm = async(namespace, name) => {
   return await response.json();
 }
 
+export const deleteVm = async(namespace, name) => {
+  const response = await fetch(`/api/vms/${namespace}/${name}`, {
+    method: 'DELETE',
+  });
+  return await response.json();
+}
+
 export const createVm = async(vmSpec) => {
   try {
     const response = await fetch('/api/vms', {

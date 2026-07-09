@@ -351,6 +351,24 @@ def get_vnc_info(namespace: str, name: str):
         logger.error(f"Error getting VNC info: {e}")
         return {"status": "error", "message": str(e)}
 
+@app.delete("/vms/{namespace}/{name}")
+def delete_vm(namespace: str, name: str):
+    logger.info(f"delete_vm: {namespace}/{name}")
+    api = client.CustomObjectsApi()
+    try:
+        # Delete the VirtualMachine resource
+        api.delete_namespaced_custom_object(
+            group="kubevirt.io",
+            version="v1",
+            namespace=namespace,
+            plural="virtualmachines",
+            name=name
+        )
+        return {"status": "deleted", "namespace": namespace, "name": name}
+    except Exception as e:
+        logger.error(f"Error deleting VM: {e}")
+        return {"status": "error", "message": str(e)}
+
 @app.post("/vms")
 def create_vm(vm_data: dict):
     logger.info(f"create_vm: {vm_data.get('name')} in namespace {vm_data.get('namespace')}")

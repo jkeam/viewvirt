@@ -29,10 +29,11 @@ import {
   RedoIcon,
   PlusIcon,
   EllipsisVIcon,
+  TrashIcon,
 } from '@patternfly/react-icons';
 import BasicTable from '../common/BasicTable';
 import { getVms, vmsAtom, getVmnamespaces, vmnamespacesAtom } from '../../utils/store.js';
-import { startVm, stopVm, restartVm } from '../../utils/api.js';
+import { startVm, stopVm, restartVm, deleteVm } from '../../utils/api.js';
 
 export default function Vm() {
   const { namespace: urlNamespace } = useParams();
@@ -111,6 +112,8 @@ export default function Vm() {
         result = await stopVm(namespace, name);
       } else if (action === 'restart') {
         result = await restartVm(namespace, name);
+      } else if (action === 'delete') {
+        result = await deleteVm(namespace, name);
       }
 
       if (result.status === 'error') {
@@ -221,6 +224,17 @@ export default function Vm() {
             isDisabled={!canRestart}
           >
             Restart
+          </DropdownItem>
+          <DropdownItem
+            key="delete"
+            icon={<TrashIcon />}
+            onClick={() => {
+              toggleKebab(kebabId, false);
+              handleVmAction('delete', item.namespace, item.name);
+            }}
+            isDisabled={isOperating}
+          >
+            Delete
           </DropdownItem>
         </DropdownList>
       </Dropdown>,

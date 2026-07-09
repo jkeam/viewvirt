@@ -41,6 +41,21 @@ const basePost = async (path, body = null) => {
   }
 };
 
+const baseDelete = async (path) => {
+  try {
+    const url = `${API_BASE_URL}${path}`;
+    const options = {
+      method: 'DELETE'
+    };
+    const callResponse = await fetch(url, options);
+    const json = await callResponse.json();
+    return json;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
+
 app.get("/api/healthz", (req, res) => {
   res.json({"status": "alive"});
 });
@@ -96,6 +111,12 @@ app.post("/api/vms/:namespace/:name/stop", async (req, res) => {
 app.post("/api/vms/:namespace/:name/restart", async (req, res) => {
   const { namespace, name } = req.params;
   const json = await basePost(`/vms/${namespace}/${name}/restart`);
+  res.json(json);
+});
+
+app.delete("/api/vms/:namespace/:name", async (req, res) => {
+  const { namespace, name } = req.params;
+  const json = await baseDelete(`/vms/${namespace}/${name}`);
   res.json(json);
 });
 

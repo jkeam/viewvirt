@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   PageSection,
   Tabs,
@@ -24,12 +24,14 @@ import {
   PlayIcon,
   StopIcon,
   RedoIcon,
+  TrashIcon,
 } from '@patternfly/react-icons';
 import { getVms } from '../../utils/store.js';
-import { startVm, stopVm, restartVm } from '../../utils/api.js';
+import { startVm, stopVm, restartVm, deleteVm } from '../../utils/api.js';
 
 export default function VmDetail() {
   const { namespace, name } = useParams();
+  const navigate = useNavigate();
   const [vm, setVm] = useState(null);
   const [activeTabKey, setActiveTabKey] = useState(0);
   const [operatingVm, setOperatingVm] = useState(false);
@@ -61,6 +63,15 @@ export default function VmDetail() {
         await stopVm(namespace, name);
       } else if (action === 'restart') {
         await restartVm(namespace, name);
+      } else if (action === 'delete') {
+        await deleteVm(namespace, name);
+        // Navigate back to VM list after successful deletion
+        navigate('/vms', {
+          state: {
+            alert: { type: 'success', message: `VM ${name} deleted successfully` }
+          }
+        });
+        return; // Exit early since we're navigating away
       }
       // Immediate refresh after action
       const vms = await getVms();
@@ -151,7 +162,7 @@ export default function VmDetail() {
                 </FlexItem>
                 <FlexItem>
                   <Button
-                    variant="danger"
+                    variant="warning"
                     icon={<StopIcon />}
                     onClick={() => handleVmAction('stop')}
                     isDisabled={!canStop}
@@ -167,6 +178,16 @@ export default function VmDetail() {
                     isDisabled={!canRestart}
                   >
                     Restart
+                  </Button>
+                </FlexItem>
+                <FlexItem>
+                  <Button
+                    variant="danger"
+                    icon={<TrashIcon />}
+                    onClick={() => handleVmAction('delete')}
+                    isDisabled={operatingVm}
+                  >
+                    Delete
                   </Button>
                 </FlexItem>
               </Flex>
