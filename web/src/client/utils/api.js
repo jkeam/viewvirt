@@ -42,3 +42,16 @@ export const restartVm = async(namespace, name) => {
   });
   return await response.json();
 }
+
+export const createVm = async(vmSpec) => {
+  try {
+    const response = await fetch('/api/vms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(vmSpec),
+    });
+    return await response.json();
+  } catch (error) {
+    return { status: 'error', message: error.message };
+  }
+}

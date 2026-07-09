@@ -59,3 +59,22 @@ export const getVmnamespaces = async () => {
   const fetched = await fetchVmnamespaces();
   return transformVmnamespaces(fetched);
 }
+
+export const vmCreateFormAtom = atom({
+  name: '',
+  namespace: '',
+  os: '',
+  cpu: 1,
+  memory: '2Gi',
+  disks: [{
+    name: 'disk0',
+    source: 'existing',
+    dataVolumeName: '',
+    imageUrl: '',
+    size: '10Gi',
+    bootOrder: 1
+  }],
+  networks: [{name: 'default', type: 'pod', model: 'virtio'}],
+  cloudInit: '',
+  runStrategy: 'Manual'
+});

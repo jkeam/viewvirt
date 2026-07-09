@@ -1,6 +1,6 @@
 import { useAtom } from 'jotai';
 import { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   PageSection,
   Select,
@@ -16,11 +16,15 @@ import {
   FlexItem,
   Alert,
   Label,
+  Toolbar,
+  ToolbarContent,
+  ToolbarItem,
 } from '@patternfly/react-core';
 import {
   PlayIcon,
   StopIcon,
   RedoIcon,
+  PlusIcon,
 } from '@patternfly/react-icons';
 import BasicTable from '../common/BasicTable';
 import { getVms, vmsAtom, getVmnamespaces, vmnamespacesAtom } from '../../utils/store.js';
@@ -29,12 +33,13 @@ import { startVm, stopVm, restartVm } from '../../utils/api.js';
 export default function Vm() {
   const { namespace: urlNamespace } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [vms, setVms] = useAtom(vmsAtom);
   const [vmnamespaces, setVmnamespaces] = useAtom(vmnamespacesAtom);
   const [filteredVms, setFilteredVms] = useState([]);
   const [isNamespaceSelectOpen, setNamespaceSelectIsOpen] = useState(false);
   const [selectedNamespace, setSelectedNamespace] = useState(urlNamespace || 'All Namespaces');
-  const [alert, setAlert] = useState(null);
+  const [alert, setAlert] = useState(location.state?.alert || null);
   const [operatingVm, setOperatingVm] = useState(null);
   useEffect(() => {
     const fetchData = async () => {
@@ -202,6 +207,15 @@ export default function Vm() {
           actionClose={<Button variant="plain" onClick={() => setAlert(null)}>×</Button>}
         />
       )}
+      <Toolbar style={{ marginBottom: '16px' }}>
+        <ToolbarContent>
+          <ToolbarItem>
+            <Button variant={ButtonVariant.primary} icon={<PlusIcon />} onClick={() => navigate('/vms/create')}>
+              Create VM
+            </Button>
+          </ToolbarItem>
+        </ToolbarContent>
+      </Toolbar>
       <Panel>
         <PanelMain>
           <PanelMainBody>
