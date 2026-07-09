@@ -22,6 +22,12 @@ export const fetchVmnamespaces = async() => {
   return resp['vmnamespaces'];
 }
 
+export const fetchDatasources = async() => {
+  const response = await fetch('/api/datasources');
+  const resp = await response.json();
+  return resp['datasources'];
+}
+
 export const startVm = async(namespace, name) => {
   const response = await fetch(`/api/vms/${namespace}/${name}/start`, {
     method: 'POST',

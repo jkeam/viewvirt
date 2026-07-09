@@ -9,7 +9,7 @@ import {
   Wizard,
   WizardStep,
 } from '@patternfly/react-core';
-import { vmCreateFormAtom, vmnamespacesAtom, storagesAtom, getVmnamespaces, getStorages } from '../../utils/store.js';
+import { vmCreateFormAtom, vmnamespacesAtom, storagesAtom, datasourcesAtom, getVmnamespaces, getStorages, getDatasources } from '../../utils/store.js';
 import { createVm } from '../../utils/api.js';
 import VmBasicInfo from './form/VmBasicInfo.jsx';
 import VmHardware from './form/VmHardware.jsx';
@@ -24,6 +24,7 @@ export default function VmCreate() {
   const [formData, setFormData] = useAtom(vmCreateFormAtom);
   const [namespaces, setNamespaces] = useAtom(vmnamespacesAtom);
   const [dataVolumes, setDataVolumes] = useAtom(storagesAtom);
+  const [dataSources, setDataSources] = useAtom(datasourcesAtom);
   const [alert, setAlert] = useState(null);
 
   useEffect(() => {
@@ -33,6 +34,9 @@ export default function VmCreate() {
 
       const fetchedStorages = await getStorages();
       setDataVolumes(fetchedStorages);
+
+      const fetchedDataSources = await getDatasources();
+      setDataSources(fetchedDataSources);
     };
     fetchData();
   }, []);
@@ -44,6 +48,7 @@ export default function VmCreate() {
       if (!disk.name) return false;
       if (disk.source === 'existing' && !disk.dataVolumeName) return false;
       if (disk.source === 'new' && (!disk.imageUrl || !disk.size)) return false;
+      if (disk.source === 'clone' && (!disk.dataSourceName || !disk.size)) return false;
     }
 
     return true;
@@ -126,6 +131,7 @@ export default function VmCreate() {
             formData={formData}
             onChange={setFormData}
             dataVolumes={dataVolumes}
+            dataSources={dataSources}
           />
         </WizardStep>
 

@@ -2,11 +2,16 @@ import { FormGroup, TextInput, NumberInput, Radio, Select, SelectOption, SelectL
 import { PlusIcon, MinusIcon } from '@patternfly/react-icons';
 import { useState } from 'react';
 
-export default function VmStorage({ formData, onChange, dataVolumes }) {
+export default function VmStorage({ formData, onChange, dataVolumes, dataSources }) {
   const [openSelects, setOpenSelects] = useState({});
+  const [openDataSourceSelects, setOpenDataSourceSelects] = useState({});
 
   const toggleSelect = (idx) => {
     setOpenSelects(prev => ({ ...prev, [idx]: !prev[idx] }));
+  };
+
+  const toggleDataSourceSelect = (idx) => {
+    setOpenDataSourceSelects(prev => ({ ...prev, [idx]: !prev[idx] }));
   };
 
   const createToggle = (idx) => (toggleRef) => (
@@ -20,13 +25,26 @@ export default function VmStorage({ formData, onChange, dataVolumes }) {
     </MenuToggle>
   );
 
+  const createDataSourceToggle = (idx) => (toggleRef) => (
+    <MenuToggle
+      ref={toggleRef}
+      onClick={() => toggleDataSourceSelect(idx)}
+      isExpanded={openDataSourceSelects[idx] || false}
+      style={{width: '100%'}}
+    >
+      {formData.disks[idx]?.dataSourceName || 'Select OS Image'}
+    </MenuToggle>
+  );
+
   const addDisk = () => {
     const newDisks = [...formData.disks, {
       name: `disk${formData.disks.length}`,
-      source: 'existing',
+      source: 'clone',
       dataVolumeName: '',
+      dataSourceName: '',
+      dataSourceNamespace: 'openshift-virtualization-os-images',
       imageUrl: '',
-      size: '10Gi',
+      size: '30Gi',
       bootOrder: 0
     }];
     onChange({ ...formData, disks: newDisks });
@@ -70,6 +88,13 @@ export default function VmStorage({ formData, onChange, dataVolumes }) {
 
             <FormGroup label="Source Type">
               <Radio
+                label="Clone from OS Image (Recommended)"
+                name={`source-${idx}`}
+                id={`clone-${idx}`}
+                isChecked={disk.source === 'clone'}
+                onChange={() => updateDisk(idx, 'source', 'clone')}
+              />
+              <Radio
                 label="Use Existing DataVolume"
                 name={`source-${idx}`}
                 id={`existing-${idx}`}
@@ -77,13 +102,58 @@ export default function VmStorage({ formData, onChange, dataVolumes }) {
                 onChange={() => updateDisk(idx, 'source', 'existing')}
               />
               <Radio
-                label="Create from Image URL"
+                label="Create from Container Image URL"
                 name={`source-${idx}`}
                 id={`new-${idx}`}
                 isChecked={disk.source === 'new'}
                 onChange={() => updateDisk(idx, 'source', 'new')}
               />
             </FormGroup>
+
+            {disk.source === 'clone' && (
+              <>
+                <FormGroup label="OS Image" isRequired helperText="Select a base OS image to clone">
+                  <Select
+                    isOpen={openDataSourceSelects[idx] || false}
+                    onOpenChange={(isOpen) => setOpenDataSourceSelects(prev => ({ ...prev, [idx]: isOpen }))}
+                    toggle={createDataSourceToggle(idx)}
+                    onSelect={(_event, value) => {
+                      const [name, namespace] = value.split('::');
+                      const newDisks = [...formData.disks];
+                      newDisks[idx] = {
+                        ...newDisks[idx],
+                        dataSourceName: name,
+                        dataSourceNamespace: namespace
+                      };
+                      // Automatically set OS when first disk (boot disk) OS image is selected
+                      const updates = { disks: newDisks };
+                      if (idx === 0) {
+                        updates.os = name;
+                      }
+                      onChange({ ...formData, ...updates });
+                      setOpenDataSourceSelects(prev => ({ ...prev, [idx]: false }));
+                    }}
+                    selected={disk.dataSourceName ? `${disk.dataSourceName}::${disk.dataSourceNamespace}` : ''}
+                  >
+                    <SelectList>
+                      {dataSources && dataSources.map(ds => (
+                        <SelectOption key={`${ds.name}-${ds.namespace}`} value={`${ds.name}::${ds.namespace}`}>
+                          {ds.name} ({ds.namespace})
+                        </SelectOption>
+                      ))}
+                    </SelectList>
+                  </Select>
+                </FormGroup>
+                <FormGroup label="Disk Size" isRequired helperText='e.g., "30Gi", "50Gi"'>
+                  <TextInput
+                    type="text"
+                    value={disk.size}
+                    onChange={(_event, value) => updateDisk(idx, 'size', value)}
+                    placeholder="30Gi"
+                  />
+                </FormGroup>
+              </>
+            )}
 
             {disk.source === 'existing' && (
               <FormGroup label="DataVolume" isRequired>
@@ -118,12 +188,12 @@ export default function VmStorage({ formData, onChange, dataVolumes }) {
                     placeholder="quay.io/containerdisks/fedora:40"
                   />
                 </FormGroup>
-                <FormGroup label="Disk Size" isRequired helperText='e.g., "10Gi", "20Gi"'>
+                <FormGroup label="Disk Size" isRequired helperText='e.g., "30Gi", "50Gi"'>
                   <TextInput
                     type="text"
                     value={disk.size}
                     onChange={(_event, value) => updateDisk(idx, 'size', value)}
-                    placeholder="10Gi"
+                    placeholder="30Gi"
                   />
                 </FormGroup>
               </>

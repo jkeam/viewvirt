@@ -65,6 +65,11 @@ app.get("/api/vmnamespaces", async (req, res) => {
   res.json(json);
 });
 
+app.get("/api/datasources", async (req, res) => {
+  const json = await baseGet("/datasources");
+  res.json(json);
+});
+
 app.post("/api/vms", async (req, res) => {
   try {
     const vmSpec = req.body;

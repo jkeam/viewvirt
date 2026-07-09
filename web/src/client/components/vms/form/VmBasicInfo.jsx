@@ -40,15 +40,6 @@ export default function VmBasicInfo({ formData, onChange, namespaces }) {
           </SelectList>
         </Select>
       </FormGroup>
-
-      <FormGroup label="Operating System" helperText="Optional OS identifier">
-        <TextInput
-          type="text"
-          value={formData.os}
-          onChange={(_event, value) => onChange({ ...formData, os: value })}
-          placeholder="fedora40"
-        />
-      </FormGroup>
     </div>
   );
 }

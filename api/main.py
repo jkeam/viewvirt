@@ -214,6 +214,20 @@ def fetch_storages() -> list[dict[str, str]]:
         "storage": dv['spec'].get('storage'),
     }, data_volumes['items']))
 
+def fetch_datasources() -> list[dict[str, str]]:
+    logger.info("fetch_datasources")
+    api = client.CustomObjectsApi()
+    try:
+        data_sources = api.list_cluster_custom_object(group="cdi.kubevirt.io", version="v1beta1", plural="datasources")
+        return list(map(lambda ds: {
+            "name": ds['metadata']['name'],
+            "namespace": ds['metadata']['namespace'],
+            "source": ds['spec'].get('source'),
+        }, data_sources['items']))
+    except Exception as e:
+        logger.error(f"Error fetching datasources: {e}")
+        return []
+
 @app.get("/")
 def get_root():
     return {"message": "welcome to the best api"}
@@ -241,6 +255,10 @@ def get_hosts():
 @app.get("/storages")
 def get_storages():
     return {"storages": fetch_storages()}
+
+@app.get("/datasources")
+def get_datasources():
+    return {"datasources": fetch_datasources()}
 
 @app.post("/vms/{namespace}/{name}/start")
 def start_vm(namespace: str, name: str):
@@ -418,7 +436,7 @@ def create_vm(vm_data: dict):
                     }
                 })
             elif disk.get('source') == 'new':
-                # Create DataVolume template
+                # Create DataVolume template from container image
                 dv_name = f"{vm_data['name']}-{disk_name}"
                 data_volume_templates.append({
                     "metadata": {
@@ -430,11 +448,40 @@ def create_vm(vm_data: dict):
                                 "url": f"docker://{disk.get('imageUrl')}"
                             }
                         },
-                        "pvc": {
+                        "storage": {
                             "accessModes": ["ReadWriteOnce"],
                             "resources": {
                                 "requests": {
                                     "storage": disk.get('size', '10Gi')
+                                }
+                            }
+                        }
+                    }
+                })
+                vm_spec['spec']['template']['spec']['volumes'].append({
+                    "name": disk_name,
+                    "dataVolume": {
+                        "name": dv_name
+                    }
+                })
+            elif disk.get('source') == 'clone':
+                # Clone from DataSource (e.g., from openshift-virtualization-os-images)
+                dv_name = f"{vm_data['name']}-{disk_name}"
+                data_volume_templates.append({
+                    "metadata": {
+                        "name": dv_name
+                    },
+                    "spec": {
+                        "sourceRef": {
+                            "kind": "DataSource",
+                            "name": disk.get('dataSourceName'),
+                            "namespace": disk.get('dataSourceNamespace', 'openshift-virtualization-os-images')
+                        },
+                        "storage": {
+                            "accessModes": ["ReadWriteOnce"],
+                            "resources": {
+                                "requests": {
+                                    "storage": disk.get('size', '30Gi')
                                 }
                             }
                         }
