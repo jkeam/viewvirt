@@ -199,8 +199,32 @@ def fetch_vms() -> list[dict[str, str]]:
 
     return result
 
+def get_node_resource_usage() -> dict[str, dict[str, Union[float, str]]]:
+    """Fetch actual CPU and memory usage from metrics API"""
+    response = client.CustomObjectsApi().list_cluster_custom_object(
+        group="metrics.k8s.io",
+        version="v1beta1",
+        plural="nodes"
+    )
+
+    usage_by_node = {}
+    for node in response.get('items', []):
+        node_name = node['metadata']['name']
+        cpu_usage_raw = node['usage']['cpu']
+
+        # Convert nanocores to cores (1 core = 1,000,000,000 nanocores)
+        cpu_usage_cores = float(cpu_usage_raw.rstrip('n')) / 1_000_000_000
+
+        usage_by_node[node_name] = {
+            'actual_cpu_usage': cpu_usage_cores,
+            'actual_memory_usage': node['usage']['memory']
+        }
+
+    return usage_by_node
+
 def fetch_hosts() -> list[dict[str, str]]:
     logger.info("fetch_hosts")
+    usage_by_node = get_node_resource_usage()
     api = client.CoreV1Api()
     hosts = api.list_node()
     return list(map(lambda host: {
@@ -209,7 +233,9 @@ def fetch_hosts() -> list[dict[str, str]]:
         "memory": host.status.allocatable['memory'],
         "total_cpu_capacity": host.status.capacity['cpu'],
         "total_memory_capacity": host.status.capacity['memory'],
-        "host_ip": list(filter(lambda address: (address.type == 'InternalIP'), host.status.addresses))[0].address
+        "host_ip": list(filter(lambda address: (address.type == 'InternalIP'), host.status.addresses))[0].address,
+        "actual_cpu_usage": usage_by_node.get(host.metadata.name, {}).get('actual_cpu_usage', 'N/A'),
+        "actual_memory_usage": usage_by_node.get(host.metadata.name, {}).get('actual_memory_usage', 'N/A')
     }, hosts.items))
 
 def fetch_storages() -> list[dict[str, str]]:

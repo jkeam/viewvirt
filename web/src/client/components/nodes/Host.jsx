@@ -17,12 +17,14 @@ export default function Host() {
     };
   }, []);
 
-  const cols = ['Name', 'Allocatable CPUs', 'Total CPU', 'Allocatable Memory', 'Total Memory', 'Host IP'];
+  const cols = ['Name', 'Used CPU', 'Allocatable CPU', 'Total CPU', 'Used Memory', 'Allocatable Memory', 'Total Memory', 'Host IP'];
   const rows = (item) => {
     return [
       item.name,
+      item.usedCpu,
       item.cpu,
       item.totalCpuCapacity,
+      item.usedMemory,
       item.memory,
       item.totalMemoryCapacity,
       item.hostIp,

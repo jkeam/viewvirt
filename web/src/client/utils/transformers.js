@@ -59,14 +59,14 @@ export const transformHosts = (fetched) => {
       return memory;
     };
 
-    let memoryDisplay = formatMemory(item.memory);
-    let totalMemoryDisplay = formatMemory(item.total_memory_capacity);
     return {
       name: item.name,
       cpu: item.cpu,
-      memory: memoryDisplay,
+      usedCpu: item.actual_cpu_usage,
+      usedMemory: formatMemory(item.actual_memory_usage),
+      memory: formatMemory(item.memory),
       totalCpuCapacity: item.total_cpu_capacity,
-      totalMemoryCapacity: totalMemoryDisplay,
+      totalMemoryCapacity: formatMemory(item.total_memory_capacity),
       hostIp: item.host_ip
     };
   };
