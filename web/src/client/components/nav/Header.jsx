@@ -9,10 +9,11 @@ import {
   MastheadBrand,
   MastheadContent,
   PageToggleButton,
-  Button,
+  Switch,
   Toolbar,
   ToolbarContent,
-  ToolbarItem
+  ToolbarItem,
+  ToolbarGroup
 } from '@patternfly/react-core';
 import BarsIcon from '@patternfly/react-icons/dist/esm/icons/bars-icon';
 import MoonIcon from '@patternfly/react-icons/dist/esm/icons/moon-icon';
@@ -40,14 +41,18 @@ export default function Header() {
       <MastheadContent>
         <Toolbar isFullHeight isStatic>
           <ToolbarContent>
-            <ToolbarItem>
-              <Button
-                variant="plain"
-                aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-                onClick={() => setDarkMode(!darkMode)}
-                icon={darkMode ? <SunIcon /> : <MoonIcon />}
-              />
-            </ToolbarItem>
+            <ToolbarGroup align={{ default: 'alignEnd' }}>
+              <ToolbarItem>
+                <Switch
+                  id="dark-mode-switch"
+                  label={<SunIcon />}
+                  labelOff={<MoonIcon />}
+                  isChecked={darkMode}
+                  onChange={() => setDarkMode(!darkMode)}
+                  aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                />
+              </ToolbarItem>
+            </ToolbarGroup>
           </ToolbarContent>
         </Toolbar>
       </MastheadContent>
