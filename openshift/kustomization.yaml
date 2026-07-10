@@ -9,6 +9,14 @@ images:
 - name: quay.io/jkeam/viewvirt-web
   digest: sha256:48d60784a361c162e26fbe2bd567daa4d357326ac06dc11ee865e0cb780352e7
 
+secretGenerator:
+  - name: proxy-secret
+    options:
+      labels:
+        app: viewvirt-web
+    literals:
+      - session_secret: "VxfhQuztzp0b7J2RBPGynnHOmNTOVz0a/rq5tt8bf8s="
+
 resources:
 - namespace.yaml
 - rbac.yaml

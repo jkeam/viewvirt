@@ -11,7 +11,9 @@ from logging import getLogger, DEBUG, StreamHandler, Formatter
 app = FastAPI(title="Virt API", summary="OCP Virt API", description="OCP Virt API")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        environ.get("CORS_ORIGIN", "http://localhost:3000")
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

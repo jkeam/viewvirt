@@ -22,6 +22,9 @@ spec:
         image: quay.io/jkeam/viewvirt-api
         ports:
         - containerPort: 8080
+        env:
+        - name: CORS_ORIGIN
+          value: "http://localhost:3000"
         livenessProbe:
           httpGet:
             path: /healthz
@@ -62,16 +65,3 @@ spec:
   selector:
     app: viewvirt-api
   type: ClusterIP
-
----
-apiVersion: route.openshift.io/v1
-kind: Route
-metadata:
-  name: viewvirt-api
-spec:
-  port:
-    targetPort: 8080
-  tls:
-    termination: edge
-  to:
-    name: viewvirt-api

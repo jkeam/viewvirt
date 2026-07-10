@@ -52,11 +52,14 @@ cd web
 
 ## Deploy
 
+1. Update `./openshift/console-link.yaml` with your domain name
+2. Optionally, update the secret value in `./openshift/kustomization.yaml`
+
 ```shell
-# will deploy into viewvirt unless you update kustomization.yaml and namespace.yaml
+# will deploy into viewvirt namespace unless you update kustomization.yaml and namespace.yaml
 oc apply -k ./openshift
 
-# delete
+# delete the app
 # oc delete -k ./openshift
 ```
 

@@ -18,6 +18,25 @@ spec:
       securityContext:
         runAsNonRoot: true
       containers:
+      - name: oauth-proxy
+        image: quay.io/openshift/origin-oauth-proxy:4.15
+        ports:
+        - containerPort: 8443
+          name: public
+        args:
+        - --https-address=:8443
+        - --provider=openshift
+        - --openshift-service-account=viewvirt
+        - --upstream=http://localhost:3000
+        - --tls-cert=/etc/tls/private/tls.crt
+        - --tls-key=/etc/tls/private/tls.key
+        - --cookie-secret-file=/etc/proxy/secrets/session_secret
+        - --openshift-sar={"namespace":"viewvirt","resource":"pods","verb":"list"}
+        volumeMounts:
+        - mountPath: /etc/tls/private
+          name: proxy-tls
+        - mountPath: /etc/proxy/secrets
+          name: proxy-secret
       - name: viewvirt-web
         image: quay.io/jkeam/viewvirt-web
         ports:
@@ -48,6 +67,13 @@ spec:
           capabilities:
             drop:
             - ALL
+      volumes:
+      - name: proxy-tls
+        secret:
+          secretName: proxy-tls
+      - name: proxy-secret
+        secret:
+          secretName: proxy-secret
 
 ---
 apiVersion: v1
@@ -56,12 +82,14 @@ metadata:
   labels:
     app: viewvirt-web
   name: viewvirt-web
+  annotations:
+    service.beta.openshift.io/serving-cert-secret-name: proxy-tls
 spec:
   ports:
-  - name: 3000-3000
-    port: 3000
+  - name: proxy
+    port: 8443
     protocol: TCP
-    targetPort: 3000
+    targetPort: 8443
   selector:
     app: viewvirt-web
   type: ClusterIP
@@ -73,8 +101,8 @@ metadata:
   name: viewvirt-web
 spec:
   port:
-    targetPort: 3000
+    targetPort: proxy
   tls:
-    termination: edge
+    termination: reencrypt
   to:
     name: viewvirt-web

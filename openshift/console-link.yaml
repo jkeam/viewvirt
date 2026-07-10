@@ -3,7 +3,7 @@ kind: ConsoleLink
 metadata:
   name: viewvirt
 spec:
-  href: 'https://viewvirt-web-viewvirt.apps.lab.lan'
+  href: 'https://viewvirt-web-viewvirt.apps.rosa.dha-test.zu23.p3.openshiftapps.com'
   location: ApplicationMenu
   text: ViewVirt
   applicationMenu:

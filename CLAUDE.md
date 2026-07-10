@@ -26,11 +26,14 @@ cd api
 # Install dependencies
 pip install -r ./requirements.txt
 
-# Run development server (requires cluster auth)
+# Run development server (requires cluster auth, no OAuth)
+# CORS is disabled for localhost in dev mode
 uvicorn main:app --host 0.0.0.0 --port 8080
 ```
 
 The backend automatically tries to load in-cluster config first, then falls back to local kubeconfig (~/.kube/config).
+
+**CORS Configuration**: In local development, the API accepts requests from `http://localhost:3000` (default). The CORS_ORIGIN environment variable defaults to localhost, so no OAuth is required locally.
 
 ### Frontend Development
 
@@ -40,11 +43,13 @@ cd web
 # Install dependencies
 npm install
 
-# Run development server (proxies API calls to backend)
+# Run development server (proxies API calls to backend, no OAuth)
 API_BASE_URL=http://127.0.0.1:8080 npm run dev
 ```
 
 Frontend dev server runs on port 3000 via vite-express. The Express middleware proxies `/api/*` requests to the FastAPI backend.
+
+**Local Development (No Authentication)**: When running locally, there is no OAuth proxy - you connect directly to the web server on port 3000. Authentication only applies when deployed to OpenShift.
 
 ### Linting
 
@@ -80,10 +85,20 @@ oc delete -k ./openshift
 ```
 
 Deployment includes:
-- API deployment (FastAPI backend)
-- Web deployment (Express/React frontend)
-- RBAC configuration for accessing VirtualMachines
+- API deployment (FastAPI backend) - internal only, no public route
+- Web deployment (Express/React frontend with OAuth proxy sidecar)
+- RBAC configuration for accessing VirtualMachines and OAuth delegation
+- OAuth proxy secret for session management
 - ConsoleLink for OpenShift console integration
+
+**Authentication**: The OpenShift deployment uses OAuth proxy to require OpenShift authentication. Users must:
+1. Be authenticated with OpenShift
+2. Have permission to list pods in the `viewvirt` namespace
+
+To grant a user access:
+```shell
+oc adm policy add-role-to-user view <username> -n viewvirt
+```
 
 To change the namespace, update `openshift/kustomization.yaml` and `openshift/namespace.yaml`.
 
@@ -135,6 +150,16 @@ Single-file FastAPI application with the following structure:
 No test suite currently exists. When adding tests:
 - Backend: Use pytest with pytest-asyncio for FastAPI endpoints
 - Frontend: Use Vitest (already configured via Vite)
+
+## Security
+
+**Local Development**: No authentication required. The API allows CORS from localhost:3000 by default.
+
+**OpenShift Deployment**: 
+- OAuth proxy sidecar requires OpenShift authentication
+- API is not publicly accessible (internal service only)
+- CORS restricted to the frontend proxy
+- Users need `list pods` permission in the `viewvirt` namespace
 
 ## Important Notes
 
