@@ -59,8 +59,15 @@ cd web
 # will deploy into viewvirt namespace unless you update kustomization.yaml and namespace.yaml
 oc apply -k ./openshift
 
-# delete the app
-# oc delete -k ./openshift
+# add yourself to this group
+oc adm groups add-users viewvirt-users $(oc whoami)
+# verify: oc get groups viewvirt-users
+```
+
+## Undeploy
+
+```shell
+oc delete -k ./openshift
 ```
 
 ## Links
