@@ -15,7 +15,7 @@ secretGenerator:
       labels:
         app: viewvirt-web
     literals:
-      - session_secret: "VxfhQuztzp0b7J2RBPGynnHOmNTOVz0a/rq5tt8bf8s="
+      - session_secret="VxfhQuztzp0b7J2RBPGynnHOmNTOVz0a/rq5tt8bf8s="
 
 resources:
 - namespace.yaml
