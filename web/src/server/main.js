@@ -80,6 +80,11 @@ app.get("/api/vmnamespaces", async (req, res) => {
   res.json(json);
 });
 
+app.get("/api/namespaces", async (req, res) => {
+  const json = await baseGet("/namespaces");
+  res.json(json);
+});
+
 app.get("/api/datasources", async (req, res) => {
   const json = await baseGet("/datasources");
   res.json(json);

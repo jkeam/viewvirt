@@ -22,6 +22,12 @@ export const fetchVmnamespaces = async() => {
   return resp['vmnamespaces'];
 }
 
+export const fetchNamespaces = async() => {
+  const response = await fetch('/api/namespaces');
+  const resp = await response.json();
+  return resp['namespaces'];
+}
+
 export const fetchDatasources = async() => {
   const response = await fetch('/api/datasources');
   const resp = await response.json();

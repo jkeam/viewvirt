@@ -9,7 +9,7 @@ import {
   Wizard,
   WizardStep,
 } from '@patternfly/react-core';
-import { vmCreateFormAtom, vmnamespacesAtom, storagesAtom, datasourcesAtom, getVmnamespaces, getStorages, getDatasources } from '../../utils/store.js';
+import { vmCreateFormAtom, namespacesAtom, storagesAtom, datasourcesAtom, getNamespaces, getStorages, getDatasources } from '../../utils/store.js';
 import { createVm } from '../../utils/api.js';
 import VmBasicInfo from './form/VmBasicInfo.jsx';
 import VmHardware from './form/VmHardware.jsx';
@@ -22,14 +22,14 @@ import VmReview from './form/VmReview.jsx';
 export default function VmCreate() {
   const navigate = useNavigate();
   const [formData, setFormData] = useAtom(vmCreateFormAtom);
-  const [namespaces, setNamespaces] = useAtom(vmnamespacesAtom);
+  const [namespaces, setNamespaces] = useAtom(namespacesAtom);
   const [dataVolumes, setDataVolumes] = useAtom(storagesAtom);
   const [dataSources, setDataSources] = useAtom(datasourcesAtom);
   const [alert, setAlert] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      const fetchedNamespaces = await getVmnamespaces();
+      const fetchedNamespaces = await getNamespaces();
       setNamespaces(fetchedNamespaces);
 
       const fetchedStorages = await getStorages();

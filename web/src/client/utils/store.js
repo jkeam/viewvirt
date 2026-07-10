@@ -4,6 +4,7 @@ import {
   fetchHosts,
   fetchStorages,
   fetchVmnamespaces,
+  fetchNamespaces,
   fetchDatasources,
 } from './api.js';
 import {
@@ -12,6 +13,7 @@ import {
   transformStorages,
   transformNetworks,
   transformVmnamespaces,
+  transformNamespaces,
 } from './transformers.js';
 
 // Dark mode atom with localStorage persistence
@@ -59,6 +61,12 @@ export const vmnamespacesAtom = atom([]);
 export const getVmnamespaces = async () => {
   const fetched = await fetchVmnamespaces();
   return transformVmnamespaces(fetched);
+}
+
+export const namespacesAtom = atom([]);
+export const getNamespaces = async () => {
+  const fetched = await fetchNamespaces();
+  return transformNamespaces(fetched);
 }
 
 export const datasourcesAtom = atom([]);

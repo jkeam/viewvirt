@@ -169,3 +169,15 @@ export const transformVmnamespaces = (fetched) => {
   }
   return fetchedVmnamespaces;
 };
+
+export const transformNamespaces = (fetched) => {
+  if (!fetched) {
+    return [];
+  }
+
+  const fetchedNamespaces = [];
+  for (const ns of fetched) {
+    fetchedNamespaces.push(ns['namespace']);
+  }
+  return fetchedNamespaces;
+};

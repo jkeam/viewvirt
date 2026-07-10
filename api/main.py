@@ -55,6 +55,7 @@ def fetch_pods(namespace:str) -> list[dict[str, str]]:
     }, pod_list.items))
 
 def fetch_vmnamespaces() -> list[dict[str, str]]:
+    """Returns namespaces that contain VirtualMachineInstances (for filtering)"""
     logger.info("fetch_vmnamespaces")
     api = client.CustomObjectsApi()
     instances = api.list_cluster_custom_object(group="kubevirt.io", version="v1", plural="virtualmachineinstances")
@@ -62,6 +63,20 @@ def fetch_vmnamespaces() -> list[dict[str, str]]:
     return list(map(lambda instance: {
         "namespace": instance
     }, unique_namespaces))
+
+def fetch_namespaces() -> list[dict[str, str]]:
+    """Returns all namespaces except those starting with 'openshift' (for VM creation)"""
+    logger.info("fetch_namespaces")
+    v1 = client.CoreV1Api()
+    namespaces = v1.list_namespace()
+    # Filter out namespaces starting with "openshift"
+    filtered_namespaces = [
+        ns.metadata.name for ns in namespaces.items
+        if not ns.metadata.name.startswith("openshift")
+    ]
+    return list(map(lambda ns: {
+        "namespace": ns
+    }, filtered_namespaces))
 
 def fetch_vms() -> list[dict[str, str]]:
     logger.info("fetch_vms")
@@ -340,6 +355,10 @@ def get_vms():
 @app.get("/vmnamespaces")
 def get_vmnamespaces():
     return {"vmnamespaces": fetch_vmnamespaces()}
+
+@app.get("/namespaces")
+def get_namespaces():
+    return {"namespaces": fetch_namespaces()}
 
 @app.get("/hosts")
 def get_hosts():
