@@ -40,7 +40,7 @@ rules:
   resources: ["*"]
   verbs: ["get", "list"]
 - apiGroups: ["kubevirt.io"]
-  resources: ["virtualmachines"]
+  resources: ["virtualmachines", "virtualmachineinstances"]
   verbs: ["*"]
 - apiGroups: ["cdi.kubevirt.io"]
   resources: ["*"]
