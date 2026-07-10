@@ -12,6 +12,7 @@ images:
 secretGenerator:
   - name: proxy-secret
     options:
+      disableNameSuffixHash: true
       labels:
         app: viewvirt-web
     literals:

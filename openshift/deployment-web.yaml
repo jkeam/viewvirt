@@ -31,7 +31,7 @@ spec:
         - --tls-cert=/etc/tls/private/tls.crt
         - --tls-key=/etc/tls/private/tls.key
         - --cookie-secret-file=/etc/proxy/secrets/session_secret
-        - --openshift-sar={"group":"viewvirt-users","resource":"virtualmachines","verb":"delete"}
+        - --openshift-sar={"group":"viewvirt.keam.io","resource":"appaccess","resourceName":"viewvirt","verb":"use"}
         - --cookie-expire=5m
         - --cookie-refresh=2m
         volumeMounts:
