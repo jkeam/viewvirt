@@ -79,11 +79,12 @@ export default function Network() {
     </MenuToggle>
   );
 
-  const cols = ['VM Name', 'Iface Name', 'IPs', 'MAC', 'Network', 'Network Name', 'Network Type', 'Iface Model'];
+  const cols = ['VM Name', 'Iface Name', 'Link State', 'IPs', 'MAC', 'Network', 'Network Name', 'Network Type', 'Iface Model'];
   const rows = (item) => {
     return [
       item.vmName,
       item.interfaceName,
+      item.linkState,
       (item.ipAddresses || []).join(', '),
       item.macAddress,
       item.bridge?.name || item.masquerade?.name || 'Pod Network',

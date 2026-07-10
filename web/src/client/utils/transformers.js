@@ -151,7 +151,8 @@ export const transformNetworks = (fetched) => {
         sriov: inter.sriov,
         ports,
         ipAddresses: inter.ip_addresses,
-        interfaceName: inter.interface_name
+        interfaceName: inter.interface_name,
+        linkState: inter.link_state
       });
     }
   }

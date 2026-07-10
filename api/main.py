@@ -190,11 +190,16 @@ def fetch_vms() -> list[dict[str, str]]:
                     "interface_name": iface_status.get('interfaceName', 'N/A'),
                     "ip_address": iface_status.get('ipAddress', 'N/A'),
                     "ip_addresses": iface_status.get('ipAddresses', []),
-                    "mac": iface_status.get('mac', 'N/A')
+                    "mac": iface_status.get('mac', 'N/A'),
+                    "link_state": iface_status.get('linkState', 'down'),
                 })
         else:
             # No instance running, just use spec
-            interfaces = interfaces_spec
+            for iface_spec in interfaces_spec:
+                interfaces.append({
+                    **iface_spec,
+                    "link_state": 'down',
+                })
 
         # Get resource requests if available
         resources = spec.get('domain', {}).get('resources', {})
