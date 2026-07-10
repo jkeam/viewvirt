@@ -14,13 +14,13 @@ import {
   FlexItem,
 } from '@patternfly/react-core';
 import BasicTable from '../common/BasicTable';
-import { getStorages, storagesAtom, getVmnamespaces, vmnamespacesAtom } from '../../utils/store.js'
+import { getStorages, storagesAtom } from '../../utils/store.js'
 
 export default function Storage() {
   const { namespace: urlNamespace } = useParams();
   const navigate = useNavigate();
   const [storages, setStorages] = useAtom(storagesAtom);
-  const [vmnamespaces, setVmnamespaces] = useAtom(vmnamespacesAtom);
+  const [storageNamespaces, setStorageNamespaces] = useState([]);
   const [filteredStorages, setFilteredStorages] = useState([]);
   const [isNamespaceSelectOpen, setNamespaceSelectIsOpen] = useState(false);
   const [selectedNamespace, setSelectedNamespace] = useState(urlNamespace || 'All Namespaces');
@@ -34,8 +34,9 @@ export default function Storage() {
       } else {
         setFilteredStorages(fetched.filter(s => s.namespace === selectedNamespace));
       }
-      const fetchVmnamespaces = await getVmnamespaces();
-      setVmnamespaces(fetchVmnamespaces);
+      // Extract unique namespaces from storage objects
+      const uniqueNamespaces = [...new Set(fetched.map(s => s.namespace).filter(Boolean))].sort();
+      setStorageNamespaces(uniqueNamespaces);
     };
 
     // Initial fetch
@@ -108,7 +109,7 @@ export default function Storage() {
                 >
                   <SelectList>
                     <SelectOption value="All Namespaces" key="all-namespaces">All Namespaces</SelectOption>
-                    {vmnamespaces.map(v => <SelectOption value={v} key={v}>{v}</SelectOption>)}
+                    {storageNamespaces.map(v => <SelectOption value={v} key={v}>{v}</SelectOption>)}
                   </SelectList>
                 </Select>
               </FlexItem>
