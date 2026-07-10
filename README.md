@@ -62,6 +62,9 @@ oc apply -k ./openshift
 # add yourself to this group
 oc adm groups add-users viewvirt-users $(oc whoami)
 # verify: oc get groups viewvirt-users
+
+# When you remove a user from viewvirt-users, they'll lose access within 2 minutes
+# oc adm groups remove-users viewvirt-users <YOUR_USER>
 ```
 
 ## Undeploy
