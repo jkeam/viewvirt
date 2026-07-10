@@ -7,7 +7,7 @@ images:
 - name: quay.io/jkeam/viewvirt-api
   digest: sha256:e28566aee773d813ff6a6394bcc619a5e6f4cb91adcc1219da8b1ea1ccf6d8fb
 - name: quay.io/jkeam/viewvirt-web
-  digest: sha256:fb795cd420e1139f2e3bee3e060ee9568fdeb590bc61761763179567b8cc3a4d
+  digest: sha256:597595ebefed925330288f7e8845c1c39cff21dcb832049d5431dc3ae92089bd
 
 secretGenerator:
   - name: proxy-secret
