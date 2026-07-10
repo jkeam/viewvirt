@@ -25,10 +25,10 @@ export default function Sidebar() {
         <NavItem isActive={/^\/vms\/?.*$/.test(route.pathname)} to="/vms">
           Virtual Machines
         </NavItem>
-        <NavItem isActive={route.pathname === '/storages'} to="/storages">
+        <NavItem isActive={/^\/storages\/?.*$/.test(route.pathname)} to="/storages">
           Storage
         </NavItem>
-        <NavItem isActive={route.pathname === '/networks'} to="/networks">
+        <NavItem isActive={/^\/networks\/?.*$/.test(route.pathname)} to="/networks">
           Network
         </NavItem>
         <NavItem isActive={route.pathname === '/hosts'} to="/hosts">

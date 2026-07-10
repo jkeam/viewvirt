@@ -37,7 +37,13 @@ const router = createBrowserRouter([
     path: "/storages",
     element: <App title="Storage" subtitle="Storage Detail"><Storage /></App>,
   }, {
+    path: "/storages/ns/:namespace",
+    element: <App title="Storage" subtitle="Storage Detail"><Storage /></App>,
+  }, {
     path: "/networks",
+    element: <App title="Network" subtitle="Network Detail"><Network /></App>,
+  }, {
+    path: "/networks/ns/:namespace",
     element: <App title="Network" subtitle="Network Detail"><Network /></App>,
   },
 ]);

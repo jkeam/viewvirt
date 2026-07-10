@@ -142,6 +142,7 @@ export const transformNetworks = (fetched) => {
       }
       fetchedInterfaces.push({
         vmName,
+        namespace: vm.namespace,
         name: inter.name,
         model: inter.model,
         macAddress: inter.macAddress,
