@@ -144,7 +144,9 @@ export const transformNetworks = (fetched) => {
         bridge: inter.bridge,
         masquerade: inter.masquerade,
         sriov: inter.sriov,
-        ports
+        ports,
+        ipAddresses: inter.ip_addresses,
+        interfaceName: inter.interface_name
       });
     }
   }

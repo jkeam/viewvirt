@@ -153,22 +153,33 @@ def fetch_vms() -> list[dict[str, str]]:
         if os == 'Unknown':
             os = vm['spec'].get('template', {}).get('metadata', {}).get('annotations', {}).get('vm.kubevirt.io/os', 'Unknown')
 
-        # Get pod network information from instance status if available
-        network_status = []
-        if instance:
-            interfaces_status = instance.get('status', {}).get('interfaces', [])
-            network_status = list(map(lambda iface: {
-                "name": iface.get('name', 'N/A'),
-                "interface_name": iface.get('interfaceName', 'N/A'),
-                "ip_address": iface.get('ipAddress', 'N/A'),
-                "ip_addresses": iface.get('ipAddresses', []),
-                "mac": iface.get('mac', 'N/A')
-            }, interfaces_status))
-
         # Get the node the VM is running on (only available when instance exists)
         node_name = None
         if instance:
             node_name = instance.get('status', {}).get('nodeName', None)
+
+        # Merge interfaces spec with runtime status
+        interfaces_spec = spec.get('domain', {}).get('devices', {}).get('interfaces', [])
+        interfaces = []
+        if instance:
+            # Build map of interface status by name
+            interfaces_status = instance.get('status', {}).get('interfaces', [])
+            status_by_name = {iface.get('name'): iface for iface in interfaces_status}
+
+            # Merge spec with status
+            for iface_spec in interfaces_spec:
+                iface_name = iface_spec.get('name', 'N/A')
+                iface_status = status_by_name.get(iface_name, {})
+                interfaces.append({
+                    **iface_spec,
+                    "interface_name": iface_status.get('interfaceName', 'N/A'),
+                    "ip_address": iface_status.get('ipAddress', 'N/A'),
+                    "ip_addresses": iface_status.get('ipAddresses', []),
+                    "mac": iface_status.get('mac', 'N/A')
+                })
+        else:
+            # No instance running, just use spec
+            interfaces = interfaces_spec
 
         result.append({
             "name": vm_name,
@@ -179,8 +190,7 @@ def fetch_vms() -> list[dict[str, str]]:
             "os": os,
             "disks": spec.get('domain', {}).get('devices', {}).get('disks', []),
             "data_volumes": volumes,
-            "interfaces": spec.get('domain', {}).get('devices', {}).get('interfaces', []),
-            "network_status": network_status,
+            "interfaces": interfaces,
             "machine_type": spec.get('domain', {}).get('machine', {}).get('type', 'Unknown'),
             "running": status not in ['Stopped', 'Halted'],
             "status": status,

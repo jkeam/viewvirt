@@ -17,16 +17,17 @@ export default function Network() {
     };
   }, []);
 
-  const cols = ['VM Name', 'Name', 'Type', 'Network', 'Model', 'MAC Addr', 'Ports'];
+  const cols = ['VM Name', 'Iface Name', 'IPs', 'MAC', 'Network', 'Network Name', 'Network Type', 'Iface Model'];
   const rows = (item) => {
     return [
       item.vmName,
+      item.interfaceName,
+      (item.ipAddresses || []).join(', '),
+      item.macAddress,
+      item.bridge?.name || item.masquerade?.name || 'Pod Network',
       item.name,
       item.bridge ? 'Bridge' : item.masquerade ? 'Masquerade' : item.sriov ? 'SR-IOV' : 'N/A',
-      item.bridge?.name || item.masquerade?.name || 'Pod Network',
       item.model,
-      item.macAddress,
-      item.ports
     ];
   };
 
