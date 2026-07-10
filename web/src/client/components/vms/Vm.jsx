@@ -22,6 +22,7 @@ import {
   Dropdown,
   DropdownList,
   DropdownItem,
+  Spinner,
 } from '@patternfly/react-core';
 import {
   PlayIcon,
@@ -47,8 +48,10 @@ export default function Vm() {
   const [alert, setAlert] = useState(location.state?.alert || null);
   const [operatingVm, setOperatingVm] = useState(null);
   const [openKebabs, setOpenKebabs] = useState({});
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       const fetched = await getVms();
       setVms(fetched);
       if (selectedNamespace === 'All Namespaces') {
@@ -58,6 +61,7 @@ export default function Vm() {
       }
       const fetchVmnamespaces = await getVmnamespaces();
       setVmnamespaces(fetchVmnamespaces);
+      setLoading(false);
     };
 
     // Initial fetch
@@ -240,6 +244,14 @@ export default function Vm() {
       </Dropdown>,
     ];
   };
+
+  if (loading) {
+    return (
+      <PageSection hasBodyWrapper={false}>
+        <Spinner aria-label="Loading virtual machines" />
+      </PageSection>
+    );
+  }
 
   return (
     <PageSection hasBodyWrapper={false}>

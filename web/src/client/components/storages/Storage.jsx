@@ -12,6 +12,7 @@ import {
   PanelMainBody,
   Flex,
   FlexItem,
+  Spinner,
 } from '@patternfly/react-core';
 import BasicTable from '../common/BasicTable';
 import { getStorages, storagesAtom } from '../../utils/store.js'
@@ -24,9 +25,11 @@ export default function Storage() {
   const [filteredStorages, setFilteredStorages] = useState([]);
   const [isNamespaceSelectOpen, setNamespaceSelectIsOpen] = useState(false);
   const [selectedNamespace, setSelectedNamespace] = useState(urlNamespace || 'All Namespaces');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       const fetched = await getStorages();
       setStorages(fetched);
       if (selectedNamespace === 'All Namespaces') {
@@ -37,6 +40,7 @@ export default function Storage() {
       // Extract unique namespaces from storage objects
       const uniqueNamespaces = [...new Set(fetched.map(s => s.namespace).filter(Boolean))].sort();
       setStorageNamespaces(uniqueNamespaces);
+      setLoading(false);
     };
 
     // Initial fetch
@@ -90,6 +94,14 @@ export default function Storage() {
       item.storage
     ];
   };
+
+  if (loading) {
+    return (
+      <PageSection hasBodyWrapper={false}>
+        <Spinner aria-label="Loading storages" />
+      </PageSection>
+    );
+  }
 
   return (
     <PageSection hasBodyWrapper={false}>

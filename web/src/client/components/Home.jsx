@@ -13,6 +13,7 @@ import {
   FlexItem,
   Title,
   Divider,
+  Spinner,
 } from '@patternfly/react-core';
 import {
   CubeIcon,
@@ -28,6 +29,7 @@ export default function Home() {
   const [hosts, setHosts] = useAtom(hostsAtom);
   const [storages, setStorages] = useAtom(storagesAtom);
   const [darkMode] = useAtom(darkModeAtom);
+  const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState({
     totalVMs: 0,
     runningVMs: 0,
@@ -44,6 +46,7 @@ export default function Home() {
 
   useEffect(() => {
     (async () => {
+      setLoading(true);
       const fetchedVms = await getVms();
       setVms(fetchedVms);
 
@@ -117,6 +120,7 @@ export default function Home() {
         totalStorage: fetchedStorages.length,
         totalStorageSize: `${totalStorageSize.toFixed(0)} GB`,
       });
+      setLoading(false);
     })();
 
     return () => {
@@ -183,6 +187,14 @@ export default function Home() {
       </Link>
     );
   };
+
+  if (loading) {
+    return (
+      <PageSection hasBodyWrapper={false}>
+        <Spinner aria-label="Loading cluster summary" />
+      </PageSection>
+    );
+  }
 
   return (
     <PageSection hasBodyWrapper={false}>

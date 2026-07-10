@@ -1,15 +1,19 @@
 import { useAtom } from 'jotai';
-import { useEffect } from 'react';
-import { PageSection } from '@patternfly/react-core';
+import { useEffect, useState } from 'react';
+import { PageSection, Spinner } from '@patternfly/react-core';
 import BasicTable from '../common/BasicTable';
 import { getHosts, hostsAtom } from '../../utils/store.js'
 
 export default function Host() {
   const [hosts, setHosts] = useAtom(hostsAtom);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     (async () => {
+      setLoading(true);
       const fetched = await getHosts();
       setHosts(fetched);
+      setLoading(false);
     })();
 
     return () => {
@@ -32,6 +36,14 @@ export default function Host() {
       item.totalMemoryCapacity,
     ];
   };
+
+  if (loading) {
+    return (
+      <PageSection hasBodyWrapper={false}>
+        <Spinner aria-label="Loading hosts" />
+      </PageSection>
+    );
+  }
 
   return (
     <PageSection hasBodyWrapper={false}>

@@ -12,6 +12,7 @@ import {
   PanelMainBody,
   Flex,
   FlexItem,
+  Spinner,
 } from '@patternfly/react-core';
 import BasicTable from '../common/BasicTable';
 import { getNetworks, networksAtom, getVmnamespaces, vmnamespacesAtom } from '../../utils/store.js'
@@ -24,9 +25,11 @@ export default function Network() {
   const [filteredInterfaces, setFilteredInterfaces] = useState([]);
   const [isNamespaceSelectOpen, setNamespaceSelectIsOpen] = useState(false);
   const [selectedNamespace, setSelectedNamespace] = useState(urlNamespace || 'All Namespaces');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       const fetched = await getNetworks();
       setInterfaces(fetched);
       if (selectedNamespace === 'All Namespaces') {
@@ -36,6 +39,7 @@ export default function Network() {
       }
       const fetchVmnamespaces = await getVmnamespaces();
       setVmnamespaces(fetchVmnamespaces);
+      setLoading(false);
     };
 
     // Initial fetch
@@ -93,6 +97,14 @@ export default function Network() {
       item.model,
     ];
   };
+
+  if (loading) {
+    return (
+      <PageSection hasBodyWrapper={false}>
+        <Spinner aria-label="Loading networks" />
+      </PageSection>
+    );
+  }
 
   return (
     <PageSection hasBodyWrapper={false}>
