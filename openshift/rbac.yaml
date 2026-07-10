@@ -34,13 +34,19 @@ metadata:
   name: viewvirt-cluster-role
 rules:
 - apiGroups: [""]
-  resources: ["nodes"]
+  resources: ["nodes", "pods"]
   verbs: ["get", "list"]
 - apiGroups: ["kubevirt.io"]
   resources: ["*"]
   verbs: ["get", "list"]
+- apiGroups: ["kubevirt.io"]
+  resources: ["virtualmachines"]
+  verbs: ["*"]
 - apiGroups: ["cdi.kubevirt.io"]
   resources: ["*"]
+  verbs: ["get", "list"]
+- apiGroups: ["metrics.k8s.io"]
+  resources: ["nodes"]
   verbs: ["get", "list"]
 
 ---
