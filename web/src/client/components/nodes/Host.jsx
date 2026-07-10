@@ -17,17 +17,19 @@ export default function Host() {
     };
   }, []);
 
-  const cols = ['Name', 'Used CPU', 'Allocatable CPU', 'Total CPU', 'Used Memory', 'Allocatable Memory', 'Total Memory', 'Host IP'];
+  const cols = ['Name', 'IP', 'Requested CPU', 'Used CPU', 'Allocatable CPU', 'Total CPU', 'Requested Memory', 'Used Memory', 'Allocatable Memory', 'Total Memory'];
   const rows = (item) => {
     return [
       item.name,
+      item.hostIp,
+      item.requestedCpu,
       item.usedCpu,
       item.cpu,
       item.totalCpuCapacity,
+      item.requestedMemory,
       item.usedMemory,
       item.memory,
       item.totalMemoryCapacity,
-      item.hostIp,
     ];
   };
 

@@ -181,11 +181,17 @@ def fetch_vms() -> list[dict[str, str]]:
             # No instance running, just use spec
             interfaces = interfaces_spec
 
+        # Get resource requests if available
+        resources = spec.get('domain', {}).get('resources', {})
+        requests = resources.get('requests', {})
+
         result.append({
             "name": vm_name,
             "namespace": vm_namespace,
             "cpu": spec.get('domain', {}).get('cpu', {}).get('cores', 0),
             "memory": spec.get('domain', {}).get('memory', {}).get('guest', '0Mi'),
+            "requested_cpu": requests.get('cpu', 'N/A'),
+            "requested_memory": requests.get('memory', 'N/A'),
             "created_at": vm['metadata']['creationTimestamp'],
             "os": os,
             "disks": spec.get('domain', {}).get('devices', {}).get('disks', []),
@@ -216,26 +222,77 @@ def get_node_resource_usage() -> dict[str, dict[str, Union[float, str]]]:
         cpu_usage_cores = float(cpu_usage_raw.rstrip('n')) / 1_000_000_000
 
         usage_by_node[node_name] = {
-            'actual_cpu_usage': cpu_usage_cores,
+            'actual_cpu_usage': round(cpu_usage_cores, 2),
             'actual_memory_usage': node['usage']['memory']
         }
 
     return usage_by_node
 
+def get_node_requested_resources() -> dict[str, dict[str, Union[float, int]]]:
+    """Calculate requested CPU and memory per node by summing pod requests"""
+    v1 = client.CoreV1Api()
+    pods = v1.list_pod_for_all_namespaces(watch=False)
+
+    requested_by_node = {}
+
+    for pod in pods.items:
+        node_name = pod.spec.node_name
+        if not node_name or pod.status.phase not in ['Running', 'Pending']:
+            continue
+
+        if node_name not in requested_by_node:
+            requested_by_node[node_name] = {
+                'requested_cpu': 0.0,
+                'requested_memory': 0
+            }
+
+        # Sum up container requests
+        for container in pod.spec.containers:
+            if container.resources and container.resources.requests:
+                # CPU can be in cores (e.g., "1") or millicores (e.g., "500m")
+                cpu_request = container.resources.requests.get('cpu', '0')
+                if cpu_request.endswith('m'):
+                    cpu_cores = float(cpu_request.rstrip('m')) / 1000
+                else:
+                    cpu_cores = float(cpu_request)
+                requested_by_node[node_name]['requested_cpu'] += cpu_cores
+
+                # Memory can be in various units (Ki, Mi, Gi)
+                memory_request = container.resources.requests.get('memory', '0')
+                if memory_request.endswith('Ki'):
+                    memory_bytes = int(memory_request.rstrip('Ki')) * 1024
+                elif memory_request.endswith('Mi'):
+                    memory_bytes = int(memory_request.rstrip('Mi')) * 1024 * 1024
+                elif memory_request.endswith('Gi'):
+                    memory_bytes = int(memory_request.rstrip('Gi')) * 1024 * 1024 * 1024
+                else:
+                    memory_bytes = int(memory_request) if memory_request.isdigit() else 0
+                requested_by_node[node_name]['requested_memory'] += memory_bytes
+
+    # Convert memory to Gi for readability
+    for node_name in requested_by_node:
+        memory_gi = requested_by_node[node_name]['requested_memory'] / (1024 * 1024 * 1024)
+        requested_by_node[node_name]['requested_memory'] = f"{memory_gi:.2f}Gi"
+
+    return requested_by_node
+
 def fetch_hosts() -> list[dict[str, str]]:
     logger.info("fetch_hosts")
     usage_by_node = get_node_resource_usage()
+    requested_by_node = get_node_requested_resources()
     api = client.CoreV1Api()
     hosts = api.list_node()
     return list(map(lambda host: {
         "name": host.metadata.name,
-        "cpu": float(host.status.allocatable['cpu'].rstrip("m")) / 1000,
+        "cpu": round(float(host.status.allocatable['cpu'].rstrip("m")) / 1000, 2),
         "memory": host.status.allocatable['memory'],
         "total_cpu_capacity": host.status.capacity['cpu'],
         "total_memory_capacity": host.status.capacity['memory'],
         "host_ip": list(filter(lambda address: (address.type == 'InternalIP'), host.status.addresses))[0].address,
         "actual_cpu_usage": usage_by_node.get(host.metadata.name, {}).get('actual_cpu_usage', 'N/A'),
-        "actual_memory_usage": usage_by_node.get(host.metadata.name, {}).get('actual_memory_usage', 'N/A')
+        "actual_memory_usage": usage_by_node.get(host.metadata.name, {}).get('actual_memory_usage', 'N/A'),
+        "requested_cpu": round(requested_by_node.get(host.metadata.name, {}).get('requested_cpu', 0), 2),
+        "requested_memory": requested_by_node.get(host.metadata.name, {}).get('requested_memory', '0.00Gi')
     }, hosts.items))
 
 def fetch_storages() -> list[dict[str, str]]:
