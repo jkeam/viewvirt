@@ -72,7 +72,7 @@ export const vmCreateFormAtom = atom({
   namespace: '',
   os: '',
   cpu: 1,
-  memory: '2Gi',
+  memory: 2,
   disks: [{
     name: 'disk0',
     source: 'clone',

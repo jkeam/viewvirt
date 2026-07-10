@@ -58,10 +58,16 @@ export const deleteVm = async(namespace, name) => {
 
 export const createVm = async(vmSpec) => {
   try {
+    // Convert numeric memory to string with Gi suffix for backend
+    const vmSpecWithMemory = {
+      ...vmSpec,
+      memory: typeof vmSpec.memory === 'number' ? `${vmSpec.memory}Gi` : vmSpec.memory
+    };
+
     const response = await fetch('/api/vms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(vmSpec),
+      body: JSON.stringify(vmSpecWithMemory),
     });
 
     if (!response.ok) {

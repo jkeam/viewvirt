@@ -37,7 +37,7 @@ export default function VmReview({ formData }) {
             </DescriptionListGroup>
             <DescriptionListGroup>
               <DescriptionListTerm>Memory</DescriptionListTerm>
-              <DescriptionListDescription>{formData.memory}</DescriptionListDescription>
+              <DescriptionListDescription>{formData.memory}Gi</DescriptionListDescription>
             </DescriptionListGroup>
           </DescriptionList>
         </CardBody>

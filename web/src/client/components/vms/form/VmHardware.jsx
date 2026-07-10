@@ -1,10 +1,10 @@
-import { FormGroup, TextInput, NumberInput, Button, ButtonVariant } from '@patternfly/react-core';
+import { FormGroup, NumberInput, Button, ButtonVariant } from '@patternfly/react-core';
 import { useState } from 'react';
 
 const PRESETS = [
-  { name: 'Small', cpu: 1, memory: '2Gi', description: 'Good for testing' },
-  { name: 'Medium', cpu: 2, memory: '4Gi', description: 'Good for development' },
-  { name: 'Large', cpu: 4, memory: '8Gi', description: 'Good for production' },
+  { name: 'Small', cpu: 1, memory: 2, description: 'Good for testing' },
+  { name: 'Medium', cpu: 2, memory: 4, description: 'Good for development' },
+  { name: 'Large', cpu: 4, memory: 8, description: 'Good for production' },
 ];
 
 export default function VmHardware({ formData, onChange }) {
@@ -39,7 +39,7 @@ export default function VmHardware({ formData, onChange }) {
               >
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontWeight: 'bold' }}>{preset.name}</div>
-                  <div style={{ fontSize: '12px' }}>{preset.cpu} CPU / {preset.memory}</div>
+                  <div style={{ fontSize: '12px' }}>{preset.cpu} CPU / {preset.memory}Gi</div>
                   <div style={{ fontSize: '11px', fontStyle: 'italic' }}>{preset.description}</div>
                 </div>
               </Button>
@@ -76,16 +76,20 @@ export default function VmHardware({ formData, onChange }) {
           </FormGroup>
 
           <FormGroup
-            label="Memory"
+            label="Memory (Gi)"
             isRequired
-            helperText='Format: "2Gi", "512Mi", "4G"'
+            helperText="Memory in Gibibytes (Gi)"
           >
-            <TextInput
-              isRequired
-              type="text"
+            <NumberInput
               value={formData.memory}
-              onChange={(_event, value) => onChange({ ...formData, memory: value })}
-              placeholder="2Gi"
+              min={1}
+              max={512}
+              onMinus={() => onChange({ ...formData, memory: Math.max(1, formData.memory - 1) })}
+              onPlus={() => onChange({ ...formData, memory: formData.memory + 1 })}
+              onChange={(event) => {
+                const value = parseInt(event.target.value) || 1;
+                onChange({ ...formData, memory: Math.max(1, value) });
+              }}
             />
           </FormGroup>
         </div>
@@ -93,7 +97,7 @@ export default function VmHardware({ formData, onChange }) {
 
       {!isCustom && (
         <div style={{ padding: '12px', border: '1px solid var(--pf-v5-global--BorderColor--100)', borderRadius: '4px' }}>
-          <strong>Selected:</strong> {formData.cpu} CPU cores, {formData.memory} memory
+          <strong>Selected:</strong> {formData.cpu} CPU cores, {formData.memory}Gi memory
         </div>
       )}
     </>

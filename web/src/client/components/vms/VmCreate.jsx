@@ -114,7 +114,7 @@ export default function VmCreate() {
           name="Hardware"
           id="hardware"
           footer={{
-            isNextDisabled: !formData.cpu || formData.cpu <= 0 || !formData.memory || !formData.memory.match(/^\d+(Mi|Gi|M|G)$/)
+            isNextDisabled: !formData.cpu || formData.cpu <= 0 || !formData.memory || formData.memory <= 0
           }}
         >
           <VmHardware formData={formData} onChange={setFormData} />
