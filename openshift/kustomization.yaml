@@ -5,9 +5,9 @@ namespace: viewvirt
 
 images:
 - name: quay.io/jkeam/viewvirt-api
-  digest: sha256:e3de0ce5c61a3837692a0614f83a90a10467a6490dbfc5230c05a9bb204f5b08
+  digest: sha256:ea643d4dbd24d6067c17df83f057457ac4008324ca40d0097b162344122ead04
 - name: quay.io/jkeam/viewvirt-web
-  digest: sha256:63ab0a649de8cd4d6d009c35e1c575dcf07dc66808f800be385dafdf12ebf80b
+  digest: sha256:48d60784a361c162e26fbe2bd567daa4d357326ac06dc11ee865e0cb780352e7
 
 resources:
 - namespace.yaml
