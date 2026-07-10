@@ -15,24 +15,23 @@ import {
 export default function Sidebar() {
   const navigate = useNavigate();
   const route = useLocation();
-  const mapping = ['/', '/vms', '/storages', '/networks', '/hosts'];
-  const onSelect = ({ itemId }) => navigate(mapping[itemId]);
+  const onSelect = ({ to }) => navigate(to);
   const pageNav = (
     <Nav onSelect={onSelect} aria-label="Nav">
       <NavList>
-        <NavItem itemId={0} isActive={route.pathname === mapping[0]} to="/">
+        <NavItem isActive={route.pathname === '/'} to="/">
           Home
         </NavItem>
-        <NavItem itemId={1} isActive={route.pathname === mapping[1]} to="/vms">
+        <NavItem isActive={/^\/vms\/?.*$/.test(route.pathname)} to="/vms">
           Virtual Machines
         </NavItem>
-        <NavItem itemId={2} isActive={route.pathname === mapping[2]} to="/storages">
+        <NavItem isActive={route.pathname === '/storages'} to="/storages">
           Storage
         </NavItem>
-        <NavItem itemId={3} isActive={route.pathname === mapping[3]} to="/networks">
+        <NavItem isActive={route.pathname === '/networks'} to="/networks">
           Network
         </NavItem>
-        <NavItem itemId={4} isActive={route.pathname === mapping[4]} to="/hosts">
+        <NavItem isActive={route.pathname === '/hosts'} to="/hosts">
           Hosts
         </NavItem>
       </NavList>

@@ -85,27 +85,39 @@ export const transformStorages = (fetched) => {
     }
     let storage = '';
     let storageClass = '';
+    let accessModes = '';
     if (item.storage) {
       storage = formatStorage(path(['resources', 'requests', 'storage'], item.storage));
       storageClass = path(['storageClassName'], item.storage);
+      if (item.storage.accessModes) {
+        accessModes = (item.storage.accessModes).join(', ');
+      }
     }
     let source = '';
+    let type = 'blank';
     if (item.source) {
       const itemSource = item.source;
       if (itemSource.http) {
+        type = 'http';
         source = itemSource.http.url;
       } else if (itemSource.pvc) {
-        source = [itemSource.pvc.namespace, itemSource.pvc.name].join(':');
+        type = 'pvc';
+        source = `namespace: ${itemSource.pvc.namespace}, pvc: ${itemSource.pvc.name}`;
+      } else if (itemSource.registry) {
+        type = 'registry';
+        source = path(['url'], itemSource.registry).replace('docker://', '');
       }
     }
 
     return {
       name: item.name,
-      namespace: item.namespace,
       vm,
+      namespace: item.namespace,
+      type,
       source,
       storage,
       storageClass,
+      accessModes
     };
   };
   return fetched.map(transform);
